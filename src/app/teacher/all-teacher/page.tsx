@@ -129,9 +129,9 @@ const Page = () => {
 
   return (
     <div className="lg:ml-[16%] ml-[45px] mt-20 flex flex-col">
-      <div className="lg:w-full w-[330px] h-[42px] p-4 bg-white rounded-md flex items-center justify-between">
-        <span className="flex flex-row lg:gap-3 gap-2 text-[12px] lg:text-[16px]">
-          Teacher | All teachers
+      <div className="lg:w-full w-[330px] h-[42px] p-4 bg-white rounded-md flex items-center justify-center">
+        <span className="flex flex-row lg:gap-3 gap-2 text-[12px] lg:text-[26px] lg: font-semibold">
+           All teachers
         </span>
       </div>
 
@@ -143,7 +143,7 @@ const Page = () => {
           name="specialization"
           value={selectedSpecialization || ""}
           onChange={handleSpecializationChange}
-          className="mt-1 block lg:w-[272px] w-[329px] h-[40px] p-2 rounded-md outline-none border-gray-300 shadow-sm"
+          className="peer w-[325px] px-4 py-2 text-sm text-gray-700  border rounded-full border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 placeholder-transparent"
         >
           <option value="">Select a specialization</option>
           {specializations.map((spec) => (

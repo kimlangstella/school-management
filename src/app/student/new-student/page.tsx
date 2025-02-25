@@ -28,8 +28,8 @@ interface FormDataType {
   branch: number | null; // Branch can be a number or null
   image: File | null;
   classrooms: number[];
-  courses: number[];
-  course_name: string[];
+  // courses: number[];
+  // course_name: string[];
   insurance_number: string;
   insurance_expiry_date: string; // Array of classroom identifiers
 }
@@ -61,23 +61,21 @@ const Page = () => {
     admission_date: "",
     branch: null, 
     image: null, 
-    classrooms: [],
-    courses: [], 
-    course_name: [], 
+    classrooms: [], 
     insurance_number: "",
     insurance_expiry_date: "",
   });
   
-  const handleCourseChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
-    const selectedValues = Array.from(e.target.selectedOptions, (option) =>
-      Number(option.value)
-    );
-    console.log("Selected Courses:", selectedValues);
-    setFormData((prevData) => ({
-      ...prevData,
-      courses: selectedValues,
-    }));
-  };
+  // const handleCourseChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+  //   const selectedValues = Array.from(e.target.selectedOptions, (option) =>
+  //     Number(option.value)
+  //   );
+  //   console.log("Selected Courses:", selectedValues);
+  //   setFormData((prevData) => ({
+  //     ...prevData,
+  //     courses: selectedValues,
+  //   }));
+  // };
   useEffect(() => {
     const fetchCoursesAndClassrooms = async () => {
       if (!token) {
@@ -146,22 +144,23 @@ const Page = () => {
   };  
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    const classroomNames = formData.classrooms.map((id) => {
-      const classroom = classrooms.find((c) => c.id === id);
-      return classroom ? classroom.name : null;
-    }).filter(Boolean); 
-    const courseNames = formData.courses.map((id) => {
-      const course = courses.find((c) => c.id === id);
-      return course ? course.name : null;
-    }).filter(Boolean);
+  
+    // ✅ Ensure classroom names are properly mapped
+    const classroomNames = formData.classrooms
+      .map((id) => {
+        const classroom = classrooms.find((c) => c.id === id);
+        return classroom ? classroom.name : null;
+      })
+      .filter(Boolean); // Remove null values
+  
+    // ✅ Build submission data
     const submissionData = {
       ...formData,
-      branch_id: formData.branch, 
-      classroom_name: classroomNames,
-      course_name: courseNames, 
+      branch_id: formData.branch,
+      classroom_name: classroomNames, // ✅ Ensure classroom names are included
     };
   
-    // console.log("🚀 JSON Data to Send:", submissionData); 
+    console.log("🚀 JSON Data to Send:", submissionData); // ✅ Debugging log
   
     try {
       let requestBody = submissionData;
@@ -169,17 +168,24 @@ const Page = () => {
         "Content-Type": "application/json",
         Authorization: `Bearer ${token}`,
       };
+  
+      // ✅ Handle Image Upload
       if (formData.image) {
         const formDataObject = new FormData();
         Object.entries(submissionData).forEach(([key, value]) => {
-          if (value !== null) formDataObject.append(key, String(value));
+          if (Array.isArray(value)) {
+            value.forEach((item) => formDataObject.append(`${key}[]`, String(item)));
+          } else if (value !== null) {
+            formDataObject.append(key, String(value));
+          }
         });
         formDataObject.append("image", formData.image);
   
-       let requestBody = formDataObject;
+        let requestBody = formDataObject;
         headers["Content-Type"] = "multipart/form-data";
       }
   
+      // ✅ Send API Request
       const response = await axios.post(
         `${process.env.NEXT_PUBLIC_BASE_URL}/api/academics/students/`,
         requestBody,
@@ -199,12 +205,20 @@ const Page = () => {
     const selectedValues = Array.from(e.target.selectedOptions, (option) =>
       Number(option.value)
     );
-    console.log("Selected Classrooms:", selectedValues);
+  
+    if (selectedValues.length === 0) {
+      console.warn("⚠️ At least one classroom must be selected!");
+      return;
+    }
+  
+    console.log("✅ Selected Classrooms:", selectedValues);
+  
     setFormData((prevData) => ({
       ...prevData,
-      classrooms: selectedValues,
+      classrooms: selectedValues, // ✅ Ensuring correct data format
     }));
   };
+  
   useEffect(() => {
     // console.log("Updated formData.classrooms:", formData.classrooms);
   }, [formData.classrooms]);
@@ -747,5 +761,3 @@ const Page = () => {
   );
 };
 export default Page;
-
-

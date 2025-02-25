@@ -1,13 +1,16 @@
+import {heroui} from '@heroui/theme';
 // import {nextui} from '@nextui-org/theme';
 // import type { Config } from "tailwindcss";
 
 // const config: Config = {
-//   content: [
-//     "./src/pages/**/*.{js,ts,jsx,tsx,mdx}",
-//     "./src/components/**/*.{js,ts,jsx,tsx,mdx}",
-//     "./src/app/**/*.{js,ts,jsx,tsx,mdx}",
-//     "./node_modules/@nextui-org/theme/dist/components/(card|ripple).js"
-//   ],
+//
+  // content: [
+  //   "//     \"./src/pages/**/*.{js,ts,jsx,tsx,mdx}\"",
+  //   "//     \"./src/components/**/*.{js,ts,jsx,tsx,mdx}\"",
+  //   "//     \"./src/app/**/*.{js,ts,jsx,tsx,mdx}\"",
+  //   "//     \"./node_modules/@nextui-org/theme/dist/components/(card|ripple).js\"\n//",
+  //   "./node_modules/@heroui/theme/dist/components/(listbox|divider).js"
+  // ],
 //   theme: {
 //     extend: {
 //       backgroundImage: {
@@ -17,7 +20,8 @@
 //       },
 //     },
 //   },
-//   plugins: [nextui()],
+//
+  // plugins: [nextui(),heroui()],
 // };
 // export default config;
 // /** @type {import('tailwindcss').Config} */

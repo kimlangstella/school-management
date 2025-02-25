@@ -219,18 +219,7 @@ const Page = () => {
   return (
     <div className="lg:ml-[219px] mt-20 ml-[25px] flex flex-col">
       {/* Header Section */}
-      <div  className="lg:w-[1060px] w-[330px] h-[40px] p-4 bg-white flex items-center rounded-md justify-between">
-        <span className="flex flex-row gap-2 text-[12px] lg:text-[15px]">
-          Student |{" "}
-          <Image src="/home.svg" width={15} height={15} alt="public" />{" "}
-          Trail-student
-        </span>
-        <Link href="/#" passHref>
-          <div  className="h-[23px] w-[57px] bg-[#213458] flex items-center justify-center rounded-md">
-            <Image src="/refresh.svg" width={16} height={16} alt="Refresh" />
-          </div>
-        </Link>
-      </div>
+
 
       <div className="flex flex-row justify-between p-3">
         <h1 className="text-center text-2xl font-bold mb-8 mt-4 border-b-2">
@@ -238,7 +227,7 @@ const Page = () => {
         </h1>
         <button
           onClick={() => router.push(`/student/trial-student/view`)}
-          className="hover:scale-110 transition-transform transform w-[98px] justify-center items-center h-[34px] flex flex-row gap-2 text-gray-300 bg-[#213458] hover:bg-gray-300"
+          className="hover:scale-110 transition-transform transform w-[98px] justify-center items-center h-[34px] flex flex-row gap-2 text-gray-300 bg-[#213458]"
         >
           <EyeIcon className="w-5 h-5 text-gray-300" /> View
         </button>

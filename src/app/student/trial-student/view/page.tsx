@@ -5,73 +5,33 @@ import axios from "axios";
 import Button from "@/components/Button";
 import Modal from "@/components/Modal";
 import Image from "next/image";
-import Link from "next/link";
 import { PencilSquareIcon } from "@heroicons/react/24/solid";
 
 interface Student {
-  teacher_name: boolean;
+  teacher_name: string | string[];
   admin_name: string;
-  program_name: boolean;
+  program_name: string | string[];
   id: number;
   client: string;
   phone: string;
   number_student: number;
-  programs: number[] | undefined; // Allow undefined to avoid errors
+  programs: number[] | undefined;
   status: string;
   status_display: string;
   assign_by: number;
   handle_by: number[];
 }
 
-interface Program {
-  id: number;
-  name: string;
-}
-
-interface User {
-  id: number;
-  username: string;
-}
-
 const Page: React.FC = () => {
   const [students, setStudents] = useState<Student[]>([]);
-  const [programs, setPrograms] = useState<Program[]>([]);
-  const [users, setUsers] = useState<User[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
   const [token, setToken] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState<string>("");
   const [selectedStudentId, setSelectedStudentId] = useState<number | null>(null);
+  const [checkedStudentId, setCheckedStudentId] = useState<number | null>(null); // ✅ Track checked student
   const [showModal, setShowModal] = useState<boolean>(false);
   const router = useRouter();
-
-  // ✅ Ensure `programIds` is always an array before using `.map()`
-  const getProgramNames = (programIds?: number[]) => {
-    if (!Array.isArray(programIds)) return "No valid programs"; // Prevent error
-
-    const programNames = programIds
-      .map((id) => {
-        const program = programs.find((prog) => prog.id === id);
-        return program ? program.name : null;
-      })
-      .filter((name) => name !== null);
-
-    return programNames.length > 0 ? programNames.join(", ") : "No valid programs";
-  };
-
-  // ✅ Ensure `userIds` is always an array before using `.map()`
-  const getUserNames = (userIds: number[] | undefined): string => {
-    if (!Array.isArray(userIds)) return "No valid users";
-
-    const userNames = userIds
-      .map((id) => {
-        const user = users.find((u) => u.id === id);
-        return user ? user.username : null;
-      })
-      .filter((name) => name !== null);
-
-    return userNames.length > 0 ? userNames.join(", ") : "No valid users";
-  };
 
   useEffect(() => {
     const tokenFromLocalStorage = localStorage.getItem("authToken");
@@ -85,7 +45,7 @@ const Page: React.FC = () => {
   useEffect(() => {
     if (!token) return;
 
-    const fetchStudentAndProgramData = async () => {
+    const fetchStudentData = async () => {
       try {
         const studentResponse = await axios.get(
           `${process.env.NEXT_PUBLIC_BASE_URL}/api/academics/student_trail/`,
@@ -93,24 +53,7 @@ const Page: React.FC = () => {
             headers: { Authorization: `Bearer ${token}` },
           }
         );
-        console.log("student",studentResponse)
         setStudents(studentResponse.data);
-
-        const programResponse = await axios.get(
-          `${process.env.NEXT_PUBLIC_BASE_URL}/api/academics/program/`,
-          {
-            headers: { Authorization: `Bearer ${token}` },
-          }
-        );
-        setPrograms(programResponse.data.results || []);
-
-        const userResponse = await axios.get(
-          `${process.env.NEXT_PUBLIC_BASE_URL}/api/auth/user`,
-          {
-            headers: { Authorization: `Bearer ${token}` },
-          }
-        );
-        setUsers(userResponse.data.results || []);
       } catch (error) {
         console.error("Error fetching data:", error);
         setError(error instanceof Error ? error.message : "Unknown error");
@@ -119,20 +62,25 @@ const Page: React.FC = () => {
       }
     };
 
-    fetchStudentAndProgramData();
+    fetchStudentData();
   }, [token]);
 
   const handleBack = () => {
     router.push(`/student/trial-student`);
   };
 
-  const handleDeleteClick = (id: number) => {
-    setSelectedStudentId(id);
-    setShowModal(true);
+  /** ✅ Toggle Checkbox Selection */
+  const handleCheck = (id: number) => {
+    setCheckedStudentId(checkedStudentId === id ? null : id);
   };
 
   const handleEdit = (id: number) => {
     router.push(`/student/trial-student/edit/${id}`);
+  };
+
+  const handleDeleteClick = (id: number) => {
+    setSelectedStudentId(id);
+    setShowModal(true);
   };
 
   const handleDeleteConfirm = async () => {
@@ -165,58 +113,19 @@ const Page: React.FC = () => {
       student.phone.includes(searchQuery)
   );
 
-  if (loading) {
-    return <div>Loading...</div>;
-  }
-
-  if (error) {
-    return <div>Error: {error}</div>;
-  }
+  if (loading) return <div>Loading...</div>;
+  if (error) return <div>Error: {error}</div>;
 
   return (
     <div className="lg:ml-[219px] mt-20 ml-[25px] flex flex-col">
       <Button className="mb-4" onClick={handleBack}>Back</Button>
+      <span className="text-[28px] font-semibold text-center">Trial List</span>
 
-      <table className="min-w-full border-collapse border">
-        <thead className="bg-[#213458] text-white">
-          <tr>
-            <th className="border px-3 py-2">ID</th>
-            <th className="border px-3 py-2">Client</th>
-            <th className="border px-3 py-2">Phone</th>
-            <th className="border px-3 py-2">Number of Students</th>
-            <th className="border px-3 py-2">Programs</th>
-            <th className="border px-3 py-2">Status</th>
-            <th className="border px-3 py-2">Assigned By</th>
-            <th className="border px-3 py-2">Handled By</th>
-            <th className="border px-3 py-2">Action</th>
-          </tr>
-        </thead>
-        <tbody>
-  {filteredStudents.length > 0 ? (
-    filteredStudents.map((student) => (
-      <tr key={student.id}>
-        <td className="border px-4 py-2">{student.id}</td>
-        <td className="border px-4 py-2">{student.client}</td>
-        <td className="border px-4 py-2">{student.phone}</td>
-        <td className="border px-4 py-2 text-center">{student.number_student}</td>
-        <td className="border px-4 py-2">
-          {Array.isArray(student.program_name) ? student.program_name.join(", ") : "No Programs"}
-        </td>
-
-        <td className="border px-4 py-2">{student.status_display}</td>
-
-        {/* ✅ Ensure admin_name is a string */}
-        <td className="border px-4 py-2">{typeof student.admin_name === "string" ? student.admin_name : "Unknown"}</td>
-
-        {/* ✅ Ensure teacher_name is an array before using .join() */}
-        <td className="border px-4 py-2">
-          {Array.isArray(student.teacher_name) ? student.teacher_name.join(", ") : "No Teachers Assigned"}
-        </td>
-
-        {/* Actions */}
-        <td className="border px-4 py-2 flex justify-center">
+      {/* ✅ Action buttons appear only when a checkbox is selected */}
+      {checkedStudentId && (
+        <div className="mt-4 mb-4 flex space-x-4 bg-gray-100 p-4 rounded-lg shadow">
           <button
-            onClick={() => handleEdit(student.id)}
+            onClick={() => handleEdit(checkedStudentId)}
             className="hover:scale-110 transition-transform transform p-2 rounded-full bg-gray-200 hover:bg-gray-300"
           >
             <PencilSquareIcon className="w-5 h-5 text-gray-700" />
@@ -227,20 +136,65 @@ const Page: React.FC = () => {
             height={20}
             alt="delete"
             className="cursor-pointer ml-3"
-            onClick={() => handleDeleteClick(student.id)}
+            onClick={() => handleDeleteClick(checkedStudentId)}
           />
-        </td>
-      </tr>
-    ))
-  ) : (
-    <tr>
-      <td colSpan={9} className="border px-4 py-2 text-center text-gray-500">
-        No students found
-      </td>
-    </tr>
-  )}
-</tbody>
+        </div>
+      )}
 
+      <table className="border w-[1050px] bg-white rounded-lg shadow-md">
+        <thead>
+          <tr className="text-center font-normal text-black">
+            <th className="p-2 border-2">
+              <input type="checkbox" disabled />
+            </th>
+            <th className="border px-3 py-2">ID</th>
+            <th className="border px-3 py-2">Client</th>
+            <th className="border px-3 py-2">Phone</th>
+            <th className="border px-3 py-2">Number of Students</th>
+            <th className="border px-3 py-2">Programs</th>
+            <th className="border px-3 py-2">Status</th>
+            <th className="border px-3 py-2">Assigned By</th>
+            <th className="border px-3 py-2">Handled By</th>
+          </tr>
+        </thead>
+        <tbody>
+          {filteredStudents.length > 0 ? (
+            filteredStudents.map((student) => (
+              <tr key={student.id}>
+                {/* ✅ Checkbox Selection */}
+                <td className="p-2 border-2 text-center">
+                  <input
+                    type="checkbox"
+                    checked={checkedStudentId === student.id}
+                    onChange={() => handleCheck(student.id)}
+                  />
+                </td>
+                <td className="border px-4 py-2">{student.id}</td>
+                <td className="border px-4 py-2">{student.client}</td>
+                <td className="border px-4 py-2">{student.phone}</td>
+                <td className="border px-4 py-2 text-center">{student.number_student}</td>
+                <td className="border px-4 py-2">
+                  {Array.isArray(student.program_name)
+                    ? student.program_name.join(", ")
+                    : "No Programs"}
+                </td>
+                <td className="border px-4 py-2">{student.status_display}</td>
+                <td className="border px-4 py-2">{student.admin_name || "Unknown"}</td>
+                <td className="border px-4 py-2">
+                  {Array.isArray(student.teacher_name)
+                    ? student.teacher_name.join(", ")
+                    : "No Teachers Assigned"}
+                </td>
+              </tr>
+            ))
+          ) : (
+            <tr>
+              <td colSpan={9} className="border px-4 py-2 text-center text-gray-500">
+                No students found
+              </td>
+            </tr>
+          )}
+        </tbody>
       </table>
 
       {showModal && <Modal onClose={handleModalClose} onConfirm={handleDeleteConfirm} />}
