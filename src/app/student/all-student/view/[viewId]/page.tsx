@@ -201,7 +201,7 @@ const Page = () => {
           <p className="p-2 text-[12px] lg:text-[16px]"><strong>Gender:</strong> {student.gender}</p>
           <p className="p-2 text-[12px] lg:text-[16px]"><strong>Admission Date:</strong> {student.admissionDate}</p>
           <p className="p-2 text-[12px] lg:text-[16px]"><strong>Insurance_number:</strong> {student.insurance_number}</p>
-          
+          <p className="p-2 text-[12px] lg:text-[16px]"><strong>Classroom:</strong> {student.classroom}</p>
           <p className="p-2 text-[12px] lg:text-[16px]"><strong>Insurance_expiry_date:</strong> {student.insurance_expiry_date}</p>
           
           {/* {student.belt_level && (
