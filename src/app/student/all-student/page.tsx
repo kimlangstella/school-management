@@ -303,16 +303,19 @@ const Page = () => {
                   )}
                   {!hiddenColumns.includes("program") && (
                     <td className="pl-2 pr-2 border-2  ">
-<div className="flex w-[385px] justify-center items-center flex-row gap-4">
-  {Array.isArray(profile.classroom_name) ? (
-    profile.classroom_name.map((name: string, index: number) => (
-      <span key={index} className="py-1">{name}</span> // ✅ Each name on a new row
-    ))
-  ) : (
-    <span>{profile.classroom_name}</span>
-  )}
-</div>
-
+                      <div className="flex w-[385px] justify-center items-center flex-row gap-4">
+                        {Array.isArray(profile.classroom_name) ? (
+                          profile.classroom_name.map(
+                            (name: string, index: number) => (
+                              <span key={index} className="py-1">
+                                {name}
+                              </span> // ✅ Each name on a new row
+                            )
+                          )
+                        ) : (
+                          <span>{profile.classroom_name}</span>
+                        )}
+                      </div>
                     </td>
                   )}
 

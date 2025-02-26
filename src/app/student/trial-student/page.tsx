@@ -446,8 +446,6 @@ className="absolute left-4 top 1/2 transform -translate-y-1/2 bg-white px-1 text
               Add
             </button>
           </div>
-
-          {/* Display selected students in a table */}
           {selectedTeacher.length > 0 && (
             <table className="mt-16 w-full border-collapse border border-gray-300">
               <thead>

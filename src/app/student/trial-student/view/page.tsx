@@ -119,7 +119,7 @@ const Page: React.FC = () => {
   return (
     <div className="lg:ml-[219px] mt-20 ml-[25px] flex flex-col">
       <Button className="mb-4" onClick={handleBack}>Back</Button>
-      <span className="text-[28px] font-semibold text-center">Trial List</span>
+      <span className="text-[28px] font-semibold mb-4 text-center">Trial List</span>
 
       {/* ✅ Action buttons appear only when a checkbox is selected */}
       {checkedStudentId && (
