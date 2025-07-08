@@ -61,7 +61,18 @@ import nationalities from "@/components/types/nationalities";
 import EditStudent from "../modal/edit-student";
 import { EditLinearIcon } from "../icon/edit";
 import AddStudent from "../modal/add-student";
+type Program = {
+  id: string;
+  name: string;
+  description: string;
+  age: string;
+  branch_id: string;
+};
 
+type Branch = {
+  id: string;
+  name: string;
+};
 export default function StudentTable() {
   const [filterValue, setFilterValue] = useState("");
   const [selectedKeys, setSelectedKeys] = useState<Selection>(new Set([]));
@@ -111,6 +122,11 @@ console.log("data",data)
       setPrograms(data as Program[]);
     }
   };
+    useEffect(() => {
+    fetchBranches();
+    fetchPrograms();
+    fetchStudents();
+  }, []);
     useEffect(() => {
     if (students.length > 0 && branches.length > 0) {
       console.log(
@@ -177,11 +193,11 @@ console.log("data",data)
       console.log("✅ Matched students with program names:", matchedPrograms);
     }
   }, [students, programs]);
-  const getBranchNameById = (id: string) => {
+  const getBranchNameById = (id: string):string => {
     const branch = branches.find((b) => b.id === id);
     return branch?.name ?? "Unknown Branch";
   };
-  const getProgramNameById = (id: string) => {
+  const getProgramNameById = (id: string): string => {
     const program = programs.find((p) => p.id === id);
     return program?.name ?? "Unknown Program";
   };
@@ -190,11 +206,7 @@ console.log("data",data)
     const user = users.find((u) => u.id === id);
     return user ? user.full_name : "Unknown User";
   };
-  useEffect(() => {
-    fetchBranches();
-    fetchPrograms();
-    fetchStudents();
-  }, []);
+
 
   const handleDelete = async (id: string) => {
     const confirmDelete = window.confirm("Delete this student?");
@@ -371,7 +383,7 @@ console.log("data",data)
         }
 
         case "program": {
-          const programName = getProgramNameById(student.program); // ✅ FIX: use student.program not student.program_id
+          const programName = getProgramNameById(student.program); 
           return (
             <Chip
               className="rounded-xl bg-default-100 px-[6px] capitalize text-default-800"

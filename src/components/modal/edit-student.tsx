@@ -38,6 +38,7 @@ export default function EditStudent({ student, onUpdate, trigger }: EditStudentP
   const [users, setUsers] = useState<User[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [gender, setGender] = useState<string>(student.gender ?? "");
+  const [status, setStatus] = useState<string>(student.status ?? "active");
   const [selectedBranchId, setSelectedBranchId] = useState<string | null>(student.branch ?? null);
   const [selectedProgramId, setSelectedProgramId] = useState<string | null>(student.program ?? null);
   const nationalityCode = nationalities.find((n) => n.name === student.nationality)?.code;
@@ -66,14 +67,15 @@ export default function EditStudent({ student, onUpdate, trigger }: EditStudentP
     const formData = new FormData(event.currentTarget);
 
     const parseDateOrNull = (val: FormDataEntryValue | null) => val?.toString().trim() || null;
-    const rawGender = formData.get("gender")?.toString().toLowerCase();
-    const rawStatus = formData.get("status")?.toString().toLowerCase();
+    const rawGender = gender;
+    const rawStatus = status;
 
-    if (!["male", "female", "other"].includes(rawGender || "")) {
+    if (!["male", "female", "other"].includes(rawGender)) {
       setError("Gender must be 'male', 'female', or 'other'.");
       return;
     }
-    if (!["active", "inactive", "hold", "graduated"].includes(rawStatus || "")) {
+
+    if (!["active", "inactive", "hold", "graduated"].includes(rawStatus)) {
       setError("Invalid status.");
       return;
     }
@@ -215,13 +217,19 @@ export default function EditStudent({ student, onUpdate, trigger }: EditStudentP
                 >
                   {(user) => <AutocompleteItem key={user.id}>{user.name}</AutocompleteItem>}
                 </Autocomplete>
-                <Autocomplete name="status" label="Status" isRequired selectedKey={student.status}>
+                <Autocomplete
+                  name="status"
+                  label="Status"
+                  isRequired
+                  selectedKey={status}
+                  onSelectionChange={(key) => setStatus(key?.toString() ?? "")}
+                >
                   <AutocompleteItem key="active" startContent={SuccessCircleSvg}>Active</AutocompleteItem>
                   <AutocompleteItem key="inactive" startContent={DangerCircleSvg}>Inactive</AutocompleteItem>
                   <AutocompleteItem key="graduated" startContent={WarningCircleSvg}>Graduated</AutocompleteItem>
+                  <AutocompleteItem key="hold">Hold</AutocompleteItem>
                 </Autocomplete>
 
-                {/* Image display and upload */}
                 {student.image_url && (
                   <div className="col-span-3">
                     <p className="text-sm text-default-500 mb-1">Current Image</p>

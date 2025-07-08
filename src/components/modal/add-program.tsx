@@ -52,30 +52,6 @@ export default function AddProgram({ onSuccess }: { onSuccess?: () => void }) {
     }));
   };
 
-  const handleAdd = async () => {
-    const { branch_id, name, description, age } = formData;
-    if (!name || !age || !branch_id) {
-      setError('All required fields must be filled.');
-      return;
-    }
-
-    const { error } = await supabase.rpc('insert_program', {
-      _branch_id: branch_id,
-      _name: name,
-      _description: description,
-      _age: age,
-    });
-
-    if (error) {
-      setError(error.message);
-    } else {
-      setFormData({ branch_id: '', name: '', description: '', age: '' });
-      setError(null);
-      onOpenChange(false);
-      onSuccess?.(); // Refresh the list
-    }
-  };
-
   return (
     <>
       <Button
@@ -88,65 +64,91 @@ export default function AddProgram({ onSuccess }: { onSuccess?: () => void }) {
 
       <Modal isOpen={isOpen} onOpenChange={onOpenChange} placement="top-center">
         <ModalContent className="dark text-foreground bg-background w-[500px] max-w-full p-3">
-          {(onClose) => (
-            <>
-              <ModalBody>
-                <div className="space-y-4">
-                  <select
-                    value={formData.branch_id}
-                    onChange={(e) =>
-                      setFormData({ ...formData, branch_id: e.target.value })
-                    }
-                    className="w-full px-3 py-2 border rounded"
-                  >
-                    <option value="">Select Branch</option>
-                    {branches.map((branch) => (
-                      <option key={branch.id} value={branch.id}>
-                        {branch.name}
-                      </option>
-                    ))}
-                  </select>
+          {(onClose) => {
+            const handleAdd = async () => {
+              const { branch_id, name, description, age } = formData;
+              if (!name || !age || !branch_id) {
+                setError('All required fields must be filled.');
+                return;
+              }
 
-                  <Input
-                    name="name"
-                    label="Program Name"
-                    placeholder="Enter program name"
-                    value={formData.name}
-                    onChange={handleChange}
-                    isRequired
-                  />
+              const { error } = await supabase.rpc('insert_program', {
+                _branch_id: branch_id,
+                _name: name,
+                _description: description,
+                _age: age,
+              });
 
-                  <Input
-                    name="description"
-                    label="Description"
-                    placeholder="Enter description"
-                    value={formData.description}
-                    onChange={handleChange}
-                  />
+              if (error) {
+                setError(error.message);
+              } else {
+                setFormData({ branch_id: '', name: '', description: '', age: '' });
+                setError(null);
+                onClose();        // ✅ properly close modal
+                onSuccess?.();    // ✅ refresh the list or parent view
+              }
+            };
 
-                  <Input
-                    name="age"
-                    label="Age Range"
-                    placeholder="Enter age (e.g. 12–15)"
-                    value={formData.age}
-                    onChange={handleChange}
-                    isRequired
-                  />
+            return (
+              <>
+                <ModalBody>
+                  <div className="space-y-4">
+                    <select
+                      value={formData.branch_id}
+                      onChange={(e) =>
+                        setFormData({ ...formData, branch_id: e.target.value })
+                      }
+                      className="w-full px-3 py-2 border rounded"
+                    >
+                      <option value="">Select Branch</option>
+                      {branches.map((branch) => (
+                        <option key={branch.id} value={branch.id}>
+                          {branch.name}
+                        </option>
+                      ))}
+                    </select>
 
-                  {error && <p className="text-sm text-red-500">{error}</p>}
-                </div>
+                    <Input
+                      name="name"
+                      label="Program Name"
+                      placeholder="Enter program name"
+                      value={formData.name}
+                      onChange={handleChange}
+                      isRequired
+                    />
 
-                <div className="mt-6 flex justify-end gap-2">
-                  <Button variant="bordered" radius="full" onPress={onClose}>
-                    Cancel
-                  </Button>
-                  <Button color="primary" radius="full" onPress={handleAdd}>
-                    Add Program
-                  </Button>
-                </div>
-              </ModalBody>
-            </>
-          )}
+                    <Input
+                      name="description"
+                      label="Description"
+                      placeholder="Enter description"
+                      value={formData.description}
+                      onChange={handleChange}
+                    />
+
+                    <Input
+                      name="age"
+                      label="Age Range"
+                      placeholder="Enter age (e.g. 12–15)"
+                      value={formData.age}
+                      onChange={handleChange}
+                      isRequired
+                    />
+
+                    {error && <p className="text-sm text-red-500">{error}</p>}
+                  </div>
+
+                  <div className="mt-6 flex justify-end gap-2">
+                    <Button variant="bordered" radius="full" onPress={onClose}>
+                      Cancel
+                    </Button>
+                    <Button color="primary" radius="full" onPress={handleAdd}>
+                      Add Program
+                    </Button>
+                  </div>
+                </ModalBody>
+              </>
+            );
+          }}
         </ModalContent>
       </Modal>
     </>

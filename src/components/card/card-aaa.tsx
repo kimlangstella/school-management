@@ -1,4 +1,4 @@
-'use client'
+"use client";
 
 import {
   Card,
@@ -8,20 +8,20 @@ import {
   DropdownMenu,
   DropdownItem,
   Button,
-} from '@heroui/react'
-import { Icon } from '@iconify/react'
+} from "@heroui/react";
+import { Icon } from "@iconify/react";
 
 interface CardAaaProps {
-  name: string
-  description: string
-  age: string
-  program?: string
-  branch?: string
-  totalMarks?: number
-  examType?: string
-  examDate?: string
-  onEdit?: () => void
-  onDelete?: () => void
+  name: string;
+  description: string;
+  age: string;
+  program?: string;
+  branch?: string;
+  totalMarks?: number;
+  examType?: string;
+  examDate?: string;
+  onEdit?: () => void;
+  onDelete?: () => void;
 }
 
 export default function CardAaa({
@@ -39,9 +39,12 @@ export default function CardAaa({
   return (
     <Card className="relative py-4 overflow-visible">
       <div className="absolute top-2 right-2">
-        <Dropdown classNames={{ content: 'z-50 min-w-[120px]' }} placement="bottom-end">
+        <Dropdown
+          classNames={{ content: "z-50 min-w-[120px]" }}
+          placement="bottom-end"
+        >
           <DropdownTrigger>
-            <Button isIconOnly size="sm" variant="light" radius="full" asChild>
+            <Button isIconOnly size="sm" variant="light" radius="full" >
               <span>
                 <Icon icon="solar:menu-dots-bold" width={16} height={16} />
               </span>
@@ -51,7 +54,11 @@ export default function CardAaa({
             <DropdownItem key="edit" onClick={onEdit}>
               Edit
             </DropdownItem>
-            <DropdownItem key="delete" onClick={onDelete} className="text-danger">
+            <DropdownItem
+              key="delete"
+              onClick={onDelete}
+              className="text-danger"
+            >
               Delete
             </DropdownItem>
           </DropdownMenu>
@@ -63,14 +70,22 @@ export default function CardAaa({
         <small className="text-default-500">{description}</small>
         <small className="text-default-500">{age}</small>
 
-        {program && <small className="text-default-500">📘 Program: {program}</small>}
-        {branch && <small className="text-default-500">🏢 Branch: {branch}</small>}
-        {typeof totalMarks === 'number' && (
+        {program && (
+          <small className="text-default-500">📘 Program: {program}</small>
+        )}
+        {branch && (
+          <small className="text-default-500">🏢 Branch: {branch}</small>
+        )}
+        {typeof totalMarks === "number" && (
           <small className="text-default-500">📊 Marks: {totalMarks}</small>
         )}
-        {examType && <small className="text-default-500">🧪 Type: {examType}</small>}
-        {examDate && <small className="text-default-500">📅 Date: {examDate}</small>}
+        {examType && (
+          <small className="text-default-500">🧪 Type: {examType}</small>
+        )}
+        {examDate && (
+          <small className="text-default-500">📅 Date: {examDate}</small>
+        )}
       </CardHeader>
     </Card>
-  )
+  );
 }

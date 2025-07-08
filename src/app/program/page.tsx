@@ -27,6 +27,7 @@ export default function ProgramPage() {
 
   const fetchPrograms = async () => {
     const { data, error } = await supabase.rpc('get_all_programs');
+    console.log("data",data)
     if (!error) setPrograms(data as Program[]);
   };
 
@@ -40,12 +41,19 @@ export default function ProgramPage() {
     fetchBranches();
   }, []);
 
-  const handleDelete = async (id: string) => {
-    const confirm = window.confirm('Delete this program?');
-    if (!confirm) return;
-    const { error } = await supabase.rpc('delete_program', { _id: id });
-    if (!error) fetchPrograms();
-  };
+const handleDelete = async (id: string) => {
+  const confirmDelete = window.confirm('Delete this program?');
+  if (!confirmDelete) return;
+
+  const { error } = await supabase.rpc('delete_program', { _id: id });
+
+  if (error) {
+    console.error('Failed to delete program:', error.message);
+    alert(`Delete failed: ${error.message}`);
+  } else {
+    fetchPrograms();
+  }
+};
 
   // ✅ Filter programs based on selected branch
   const filteredPrograms = selectedBranch
@@ -96,7 +104,7 @@ export default function ProgramPage() {
                 name={program.name}
                 description={program.description}
                 age={program.age}
-                branchName={getBranchNameById(program.branch_id)} // 👈 show branch name in card
+                branch={getBranchNameById(program.branch_id)} 
                 onEdit={() => setSelectedProgram(program)}
                 onDelete={() => handleDelete(program.id)}
               />

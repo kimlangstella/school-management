@@ -17,7 +17,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
     <html lang="en">
       <head></head>
       <body className={inter.className}>
-        <ClientLayout>{children}</ClientLayout> {/* Render the client-side layout */}
+        <ClientLayout>{children}</ClientLayout> 
       </body>
     </html>
   );

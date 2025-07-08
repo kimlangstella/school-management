@@ -198,6 +198,12 @@ export const sectionItemsWithTeams: SidebarItem[] = [
         icon: "mdi:notebook-outline",
         title: "Course",
       },
+        {
+        key: "staff",
+        href: "/staff",
+        icon: "fa-users",
+        title: "Staff",
+      },
         ],
     },
 ];

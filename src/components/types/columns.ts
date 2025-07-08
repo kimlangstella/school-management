@@ -30,6 +30,7 @@ export type ColumnsKey =
   | "nationality"
   | "date_of_birth"
   | "phone"
+  | "parent_contact"
   | "branch"
   | "program"
   | "status"
