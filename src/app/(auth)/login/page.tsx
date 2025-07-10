@@ -52,8 +52,6 @@ const handleLogin = async (e: React.FormEvent) => {
   }
 
   const userId = data.session.user.id;
-
-  // ✅ Fetch user profile from Supabase RPC
   const { data: profileData, error: profileError } = await supabase.rpc("get_user_by_id", {
     _id: userId,
   });
@@ -64,15 +62,11 @@ const handleLogin = async (e: React.FormEvent) => {
     setIsSubmitting(false);
     return;
   }
-
-  // ✅ Extract profile (handle array or object)
   const profile = Array.isArray(profileData) ? profileData[0] : profileData;
 
   if (!profile || !profile.name) {
     console.warn("Warning: User profile missing name field.");
   }
-
-  // ✅ Store to localStorage
   localStorage.setItem("user", JSON.stringify(profile));
   localStorage.setItem("userName", profile.name || "");
   localStorage.setItem("profileUrl", profile.profile_url || "");

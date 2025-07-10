@@ -1,14 +1,27 @@
-"use client"; // Mark this component as a client component
+"use client";
 
-import { usePathname } from "next/navigation";
+import { useEffect } from "react";
+import { useRouter, usePathname } from "next/navigation";
 import DashboardLayout from "./dashboard";
 
 export default function ClientLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
-  const noDashboardRoutes = ["/login"];
+  const router = useRouter();
 
-  // Check if the current route is in the list of routes that should not show the dashboard
-  const isDashboardVisible = !noDashboardRoutes.includes(pathname);
+  const noAuthRoutes = ["/login"]; 
+  useEffect(() => {
+    const isAuthRoute = noAuthRoutes.includes(pathname);
+    const authToken = localStorage.getItem("authToken");
+
+    if (!authToken && !isAuthRoute) {
+      router.push("/login");
+    }
+    if (authToken && pathname === "/login") {
+      router.push("/");
+    }
+  }, [pathname, router]);
+
+  const isDashboardVisible = !noAuthRoutes.includes(pathname);
 
   return <>{isDashboardVisible ? <DashboardLayout>{children}</DashboardLayout> : children}</>;
 }
