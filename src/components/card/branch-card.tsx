@@ -44,11 +44,6 @@ export default function BranchCard() {
   const [branches, setBranches] = useState<Branch[]>([]);
   const [error, setError] = useState<string | null>(null);
 
-  const fetchBranches = async () => {
-    const { data, error } = await supabase.rpc('get_all_branches');
-    if (error) setError(error.message);
-    else setBranches(data as Branch[]);
-  };
 
 useEffect(() => {
   fetchBranchesWithStudents();
@@ -57,7 +52,7 @@ useEffect(() => {
 const fetchBranchesWithStudents = async () => {
   const [branchRes, studentRes] = await Promise.all([
     supabase.rpc("get_all_branches"),
-    supabase.rpc("get_all_students")
+    supabase.rpc("get_all_students_with_programs")
   ]);
 
   if (branchRes.error || studentRes.error) {
@@ -69,13 +64,16 @@ const fetchBranchesWithStudents = async () => {
   const students = studentRes.data;
 
   // Count students per branch
-  const branchesWithCounts = branches.map((branch) => {
-    const activeStudents = students.filter((s) => s.branch === branch.id).length;
-    return {
-      ...branch,
-      active_students: activeStudents
-    };
-  });
+ const branchesWithCounts = branches.map((branch: { id: any; }) => {
+  const activeStudents = students.filter(
+    (s: { branch_id: any; status: string; }) => s.branch_id === branch.id && s.status === "active"
+  ).length;
+
+  return {
+    ...branch,
+    active_students: activeStudents
+  };
+});
 
   setBranches(branchesWithCounts);
 };

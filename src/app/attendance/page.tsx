@@ -31,7 +31,7 @@ export default function AttendancePage() {
   };
 
   useEffect(() => {
-    fetchAttendance(); // initial load
+    fetchAttendance(); 
   }, []);
 
   return (

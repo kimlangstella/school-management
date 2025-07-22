@@ -192,12 +192,12 @@ export const sectionItemsWithTeams: SidebarItem[] = [
         icon: "mdi:file-document-box-outline",
         title: "Program",
       },
-      {
-        key: "course",
-        href: "/course",
-        icon: "mdi:notebook-outline",
-        title: "Course",
-      },
+    //   {
+    //     key: "course",
+    //     href: "/course",
+    //     icon: "mdi:notebook-outline",
+    //     title: "Course",
+    //   },
         {
         key: "staff",
         href: "/staff",

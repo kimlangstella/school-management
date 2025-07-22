@@ -6,11 +6,11 @@ import {
   Button,
   Divider,
   Input,
+  Listbox,
+  ListboxItem,
   Modal,
   ModalBody,
   ModalContent,
-  Select,
-  SelectItem,
   useDisclosure,
 } from "@heroui/react";
 import { Icon } from "@iconify/react";
@@ -32,6 +32,7 @@ type User = {
 };
 
 type Program = {
+  branch_id: string;
   id: string;
   name: string;
   branch_name: string;
@@ -48,7 +49,7 @@ export default function AddStudent({ onUpdate }: AddStudentProps) {
   const [programs, setPrograms] = useState<Program[]>([]);
   const [users, setUsers] = useState<User[]>([]);
   const [selectedBranchId, setSelectedBranchId] = useState<string | null>(null);
-  const [selectedProgram, setSelectedProgram] = useState<string | null>(null); // ✅ single
+  const [selectedPrograms, setSelectedPrograms] = useState<string[]>([]); // ✅ FIX
   const [selectedCreatedBy, setSelectedCreatedBy] = useState<string | null>(null);
   const [selectedModifiedBy, setSelectedModifiedBy] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -71,7 +72,6 @@ export default function AddStudent({ onUpdate }: AddStudentProps) {
           supabase.rpc("get_all_programs"),
           supabase.rpc("get_all_users"),
         ]);
-
       if (branchData) setBranches(branchData);
       if (programData) setPrograms(programData);
       if (userList) setUsers(userList);
@@ -79,6 +79,10 @@ export default function AddStudent({ onUpdate }: AddStudentProps) {
 
     fetchInitialData();
   }, []);
+
+const filteredPrograms = selectedBranchId
+  ? programs.filter((p) => p.branch_id === selectedBranchId)
+  : [];
 
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -114,42 +118,51 @@ export default function AddStudent({ onUpdate }: AddStudentProps) {
 
     const gender = formData.get("gender")?.toString().toLowerCase();
     const status = formData.get("status")?.toString().toLowerCase();
+
     if (!["male", "female", "other"].includes(gender || "")) {
       return setError("Invalid gender selected.");
     }
+
     if (!["active", "inactive", "hold"].includes(status || "")) {
       return setError("Invalid status selected.");
     }
+if (!selectedBranchId || selectedBranchId.trim() === "") {
+  return setError("Please select a branch.");
+}
+const payload = {
+  _first_name: formData.get("first_name"),
+  _last_name: formData.get("last_name"),
+  _gender: gender,
+  _date_of_birth: parseDate(formData.get("dob")),
+  _place_of_birth: formData.get("pob"),
+  _nationality: formData.get("nationality"),
+  _phone: formData.get("phone"),
+  _email: formData.get("email"),
+  _password: "12345678",
+  _mother_name: formData.get("mother_name"),
+  _mother_occupation: formData.get("mother_occupation"),
+  _father_name: formData.get("father_name"),
+  _father_occupation: formData.get("father_occupation"),
+  _address: formData.get("address"),
+  _parent_contact: formData.get("parent_contact"),
+  _branch: selectedBranchId, // ✅ ADD THIS
+  _program_ids: selectedPrograms,
+  _image_url: imageUrl,
+  _admission_date: parseDate(formData.get("admission_date")),
+  _status: status,
+  _insurance_number: formData.get("insurance_number"),
+  _insurance_expiry: parseDate(formData.get("insurance_expiry_date")),
+  _created_by: selectedCreatedBy,
+  _modified_by: selectedModifiedBy,
+};
 
-    const payload = {
-      _first_name: formData.get("first_name"),
-      _last_name: formData.get("last_name"),
-      _gender: gender,
-      _date_of_birth: parseDate(formData.get("dob")),
-      _place_of_birth: formData.get("pob"),
-      _nationality: formData.get("nationality"),
-      _phone: formData.get("phone"),
-      _email: formData.get("email"),
-      _password: "12345678",
-      _mother_name: formData.get("mother_name"),
-      _mother_occupation: formData.get("mother_occupation"),
-      _father_name: formData.get("father_name"),
-      _father_occupation: formData.get("father_occupation"),
-      _address: formData.get("address"),
-      _parent_contact: formData.get("parent_contact"),
-      _branch: selectedBranchId,
-      _program: selectedProgram, // ✅ correct field
-      _image_url: imageUrl,
-      _admission_date: parseDate(formData.get("admission_date")),
-      _status: status,
-      _insurance_number: formData.get("insurance_number"),
-      _insurance_expiry: parseDate(formData.get("insurance_expiry_date")),
-      _created_by: selectedCreatedBy,
-      _modified_by: selectedModifiedBy,
-    };
+
+
+
+
 
     const result = await supabase.rpc("insert_student", payload);
-
+    console.log("📦 Submitting payload:", payload);
     if (result.error) {
       setError(`Insert failed: ${result.error.message}`);
       return;
@@ -181,16 +194,9 @@ export default function AddStudent({ onUpdate }: AddStudentProps) {
                 <Input name="pob" isRequired label="Place of Birth" />
                 <Autocomplete name="nationality" isRequired defaultItems={nationalities} label="Nationality">
                   {(item) => (
-                    <AutocompleteItem
-                      key={item.code}
-                      startContent={
-                        <Avatar
-                          alt="Flag"
-                          className="h-6 w-6"
-                          src={`https://flagcdn.com/${item.code.toLowerCase()}.svg`}
-                        />
-                      }
-                    >
+                    <AutocompleteItem key={item.code} startContent={
+                      <Avatar alt="Flag" className="h-6 w-6" src={`https://flagcdn.com/${item.code.toLowerCase()}.svg`} />
+                    }>
                       {item.name}
                     </AutocompleteItem>
                   )}
@@ -208,27 +214,59 @@ export default function AddStudent({ onUpdate }: AddStudentProps) {
               <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
                 <Input name="admission_date" isRequired label="Admission Date" type="date" />
 
-                <Autocomplete name="branch" isRequired label="Branch" selectedKey={selectedBranchId ?? undefined}
-                  onSelectionChange={(key) => setSelectedBranchId(key?.toString() ?? null)}
-                  items={branches}>
-                  {(item) => <AutocompleteItem key={item.id}>{item.name}</AutocompleteItem>}
-                </Autocomplete>
+<Autocomplete
+  name="branch"
+  label="Branch"
+  selectedKey={selectedBranchId ?? undefined}
+  onSelectionChange={(key) => {
+    const id = key?.toString() ?? null;
+    setSelectedBranchId(id);
+    setSelectedProgramIds([]); // Clear programs when branch changes
+  }}
+  items={branches}
+  isRequired
+>
+  {(item) => <AutocompleteItem key={item.id}>{item.name}</AutocompleteItem>}
+</Autocomplete>
 
-                <Autocomplete
-                  name="program"
-                  isRequired
-                  label="Program"
-                  placeholder="Select program"
-                  selectedKey={selectedProgram ?? undefined}
-                  onSelectionChange={(key) => key && setSelectedProgram(String(key))}
-                  items={programs}
-                >
-                  {(item: Program) => (
-                    <AutocompleteItem key={item.id} textValue={item.name}>
-                      {item.name}   
-                    </AutocompleteItem>
-                  )}
-                </Autocomplete>
+<div className="mt-4">
+  <label className="block mb-1 text-sm font-medium text-default-500">
+    Programs<span className="text-red-500">*</span>
+  </label>
+  <div className="w-full max-w-[400px] border px-2 py-2 rounded-xl border-default-200 dark:border-default-100">
+    <Listbox
+      classNames={{
+        base: "max-w-full",
+        list: "max-h-[150px] overflow-y-auto",
+      }}
+      selectedKeys={new Set(selectedPrograms)}
+      items={programs.filter((p) =>
+        selectedBranchId ? p.branch_id === selectedBranchId : true
+      )}
+      label="Select Programs"
+      selectionMode="multiple"
+      variant="flat"
+      onSelectionChange={(keys) => {
+        if (keys instanceof Set) {
+          const values = [...keys].map((k) => k.toString());
+          setSelectedPrograms(values);
+        }
+      }}
+    >
+      {(program: Program) => (
+        <ListboxItem key={program.id} textValue={program.name}>
+          <div className="flex flex-col">
+            <span className="text-small font-medium">{program.name}</span>
+            <span className="text-tiny text-default-400">
+              {program.branch_name}
+            </span>
+          </div>
+        </ListboxItem>
+      )}
+    </Listbox>
+  </div>
+</div>
+
 
                 <Autocomplete name="status" isRequired label="Status">
                   <AutocompleteItem startContent={SuccessCircleSvg}>Active</AutocompleteItem>

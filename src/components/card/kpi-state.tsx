@@ -5,70 +5,104 @@ import {
   Autocomplete,
   AutocompleteItem,
   Button,
-  Card,
-  Chip
+  Card
 } from "@heroui/react";
 import { Icon } from "@iconify/react";
 import { supabase } from "../../../lib/supabaseClient";
-import { Student } from "@/components/types/columns"; // Adjust path if needed
 
+// ---------- Type Definitions ----------
 type Program = {
   id: string;
   name: string;
-  branch_name?: string;
+  program_name?: string;
 };
 
+type Student = {
+  id: string;
+  status: string;
+};
+
+type StudentProgram = {
+  student_id: string;
+  program_id: string;
+};
+type ProgramStat = {
+  id: string;
+  name: string;
+  active_students: number;
+};
 export default function KpiState() {
   const [students, setStudents] = useState<Student[]>([]);
-  const [programs, setPrograms] = useState<Program[]>([]);
+  const [programs, setPrograms] = useState<ProgramStat[]>([]);
   const [studentLengthActual, setStudentLengthActual] = useState(0);
   const [studentLength, setStudentLength] = useState(0);
   const [activeStudentCount, setActiveStudentCount] = useState(0);
   const [selectedProgram, setSelectedProgram] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
 
-  // Fetch students
-  const fetchStudents = async () => {
-    const { data, error } = await supabase.rpc("get_all_students");
-    if (error) {
-      console.error("Failed to fetch students:", error.message);
-      setError(error.message);
-    } else {
-      setStudents(data);
-      setStudentLengthActual(data.length);
-
-      const active = data.filter((s: Student) => s.status === "active");
-      setActiveStudentCount(active.length);
-    }
-  };
-
- const fetchPrograms = async () => {
-     const { data, error } = await supabase.rpc('get_all_programs');
-     if (!error) setPrograms(data as Program[]);
-   };
- 
-
- 
-   useEffect(() => {
-     fetchPrograms();
-   }, []);
-
-  // Count filtered students
+  // Fetch all data on mount
   useEffect(() => {
-    if (selectedProgram) {
-      const filtered = students.filter(
-        (s: Student) => s.program === selectedProgram && s.status === "active"
-      );
-      setStudentLength(filtered.length);
+    fetchAllData();
+  }, []);
+
+  // Recalculate filtered students by selected program
+  useEffect(() => {
+    if (selectedProgram && programs.length > 0) {
+      const found = programs.find((p) => p.id === selectedProgram);
+      setStudentLength(found?.active_students ?? 0);
     } else {
       setStudentLength(0);
     }
-  }, [students, selectedProgram]);
+  }, [selectedProgram, programs]);
 
-  useEffect(() => {
-    fetchStudents();
-    fetchPrograms();
-  }, []);
+  const fetchAllData = async () => {
+    const [programRes, studentRes, studentProgramRes] = await Promise.all([
+      supabase.rpc("get_all_programs"),
+      supabase.rpc("get_all_students_with_programs"),
+      supabase.from("student_programs").select("*"),
+    ]);
+
+    if (
+      programRes.error ||
+      studentRes.error ||
+      studentProgramRes.error
+    ) {
+      setError(
+        programRes.error?.message ||
+        studentRes.error?.message ||
+        studentProgramRes.error?.message ||
+        "Unknown error"
+      );
+      return;
+    }
+
+    const programData = programRes.data as Program[];
+    const studentData = studentRes.data as Student[];
+    const studentPrograms = studentProgramRes.data as StudentProgram[];
+
+    setStudents(studentData);
+    setStudentLengthActual(studentData.length);
+
+    const activeStudents = studentData.filter((s) => s.status === "active");
+    setActiveStudentCount(activeStudents.length);
+
+    const activeStudentIds = new Set(activeStudents.map((s) => s.id));
+
+    const programCounts: Record<string, number> = {};
+    studentPrograms.forEach(({ student_id, program_id }) => {
+      if (activeStudentIds.has(student_id)) {
+        programCounts[program_id] = (programCounts[program_id] || 0) + 1;
+      }
+    });
+
+    const programStats = programData.map((p) => ({
+      id: p.id,
+      name: p.name,
+      active_students: programCounts[p.id] || 0,
+    }));
+
+    setPrograms(programStats);
+  };
 
   return (
     <dl className="grid w-full grid-cols-1 gap-5 sm:grid-cols-2 md:grid-cols-3">
@@ -84,10 +118,10 @@ export default function KpiState() {
           </div>
         </div>
         <div className="bg-default-100">
-    <Button fullWidth className="flex justify-start text-xs text-default-500" radius="none" variant="light">
-      View All
-    </Button>
-  </div>
+          <Button fullWidth className="flex justify-start text-xs text-default-500" radius="none" variant="light">
+            View All
+          </Button>
+        </div>
       </Card>
 
       {/* Active Students by Program */}
@@ -107,13 +141,13 @@ export default function KpiState() {
                 label="Program"
                 placeholder="Select program"
                 selectedKey={selectedProgram ?? undefined}
-                onSelectionChange={(key) => key && setSelectedProgram(String(key))}
+                onSelectionChange={(key) => setSelectedProgram(key ? String(key) : null)}
                 items={programs}
                 className="mt-2"
               >
                 {(item) => (
                   <AutocompleteItem key={item.id} textValue={item.name}>
-                    {item.name} {item.program_name ? `(${item.program_name})` : ""}
+                    {item.name}
                   </AutocompleteItem>
                 )}
               </Autocomplete>
@@ -121,10 +155,10 @@ export default function KpiState() {
           </div>
         </div>
         <div className="bg-default-100">
-    <Button fullWidth className="flex justify-start text-xs text-default-500" radius="none" variant="light">
-      View All
-    </Button>
-  </div>
+          <Button fullWidth className="flex justify-start text-xs text-default-500" radius="none" variant="light">
+            View All
+          </Button>
+        </div>
       </Card>
 
       {/* Total Active Students */}
@@ -139,10 +173,10 @@ export default function KpiState() {
           </div>
         </div>
         <div className="bg-default-100">
-    <Button fullWidth className="flex justify-start text-xs text-default-500" radius="none" variant="light">
-      View All
-    </Button>
-  </div>
+          <Button fullWidth className="flex justify-start text-xs text-default-500" radius="none" variant="light">
+            View All
+          </Button>
+        </div>
       </Card>
     </dl>
   );

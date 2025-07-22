@@ -54,7 +54,6 @@ import {
   ColumnsKey,
   StatusStudent,
   Student,
-  Students,
 } from "@/components/types/columns";
 import { supabase } from "../../../lib/supabaseClient";
 import nationalities from "@/components/types/nationalities";
@@ -98,115 +97,27 @@ export default function StudentTable() {
 
   const fetchStudents = async () => {
     const { data, error } = await supabase.rpc("get_all_students");
-console.log("data",data)
+    console.log("data", data);
     if (error) {
-      setError(error.message);
+      console.error("❌ Supabase error:", error.message);
     } else {
+      console.log("✅ Data fetched from Supabase:", data);
       setStudents(data);
     }
   };
-
   const fetchBranches = async () => {
     const { data, error } = await supabase.rpc("get_all_branches");
+    console.log("data", data);
     if (error) {
       setError(error.message);
     } else {
       setBranches(data as Branch[]);
     }
   };
-  const fetchPrograms = async () => {
-    const { data, error } = await supabase.rpc("get_all_programs");
-    if (error) {
-      setError(error.message);
-    } else {
-      setPrograms(data as Program[]);
-    }
-  };
-    useEffect(() => {
+  useEffect(() => {
     fetchBranches();
-    fetchPrograms();
     fetchStudents();
   }, []);
-    useEffect(() => {
-    if (students.length > 0 && branches.length > 0) {
-      console.log(
-        "🟨 All Branch IDs:",
-        branches.map((b) => b.id)
-      );
-      console.log(
-        "🟦 All Student branch values:",
-        students.map((s) => s.branch)
-      );
-
-      const matchedStudents = students
-        .filter((student) =>
-          branches.some(
-            (branch) =>
-              branch.id.toLowerCase() === student.branch?.toLowerCase()
-          )
-        )
-        .map((student) => {
-          const branch = branches.find(
-            (b) => b.id.toLowerCase() === student.branch?.toLowerCase()
-          );
-
-          return {
-            studentName: student.first_name + " " + student.last_name,
-            branchId: student.branch,
-            branchName: branch?.name ?? "Unknown Branch",
-          };
-        });
-
-      console.log("✅ Matched students with branch names:", matchedStudents);
-    }
-  }, [students, branches]);
-  useEffect(() => {
-    if (students.length > 0 && programs.length > 0) {
-      console.log(
-        "📘 All Program IDs:",
-        programs.map((p) => p.id)
-      );
-      console.log(
-        "📗 All Student program values:",
-        students.map((s) => s.program)
-      );
-
-      const matchedPrograms = students
-        .filter((student) =>
-          programs.some(
-            (program) =>
-              program.id.toLowerCase() === student.program?.toLowerCase()
-          )
-        )
-        .map((student) => {
-          const program = programs.find(
-            (p) => p.id.toLowerCase() === student.program?.toLowerCase()
-          );
-
-          return {
-            studentName: student.first_name + " " + student.last_name,
-            programId: student.program,
-            programName: program?.name ?? "Unknown Program",
-          };
-        });
-
-      console.log("✅ Matched students with program names:", matchedPrograms);
-    }
-  }, [students, programs]);
-  const getBranchNameById = (id: string):string => {
-    const branch = branches.find((b) => b.id === id);
-    return branch?.name ?? "Unknown Branch";
-  };
-  const getProgramNameById = (id: string): string => {
-    const program = programs.find((p) => p.id === id);
-    return program?.name ?? "Unknown Program";
-  };
-
-  const getUserNameById = (id: string): string => {
-    const user = users.find((u) => u.id === id);
-    return user ? user.full_name : "Unknown User";
-  };
-
 
   const handleDelete = async (id: string) => {
     const confirmDelete = window.confirm("Delete this student?");
@@ -220,9 +131,6 @@ console.log("data",data)
       fetchStudents(); // ✅ will now work
     }
   };
-
-
-
 
   const headerColumns = useMemo(() => {
     if (visibleColumns === "all") return columns;
@@ -276,7 +184,9 @@ console.log("data",data)
           student.email?.toLowerCase().includes(lowercased) ||
           student.gender?.toLowerCase().includes(lowercased) ||
           student.phone?.toLowerCase().includes(lowercased) ||
-          student.program?.toLowerCase().includes(lowercased) // <-- include any field you want
+          (student.programs || []).some((id: string) =>
+            getProgramNameById(id).toLowerCase().includes(lowercased)
+          )
       );
     }
 
@@ -368,32 +278,51 @@ console.log("data",data)
               other: "Other",
             }[cellValue?.toLowerCase()] ?? "Unknown"
           );
-
-        case "branch": {
-          const branchName = getBranchNameById(student.branch);
+        case "modified_by": {
+          <Chip
+            className="rounded-xl bg-default-100 px-[6px] capitalize text-default-800"
+            size="sm"
+            variant="flat"
+          >
+            {student.modified_by_name || "Unknown"}
+          </Chip>;
+        }
+        case "created_by": {
           return (
             <Chip
               className="rounded-xl bg-default-100 px-[6px] capitalize text-default-800"
               size="sm"
               variant="flat"
             >
-              {branchName}
+              {student.created_by_name}
             </Chip>
           );
         }
 
-        case "program": {
-          const programName = getProgramNameById(student.program); 
+        case "branch":
           return (
             <Chip
               className="rounded-xl bg-default-100 px-[6px] capitalize text-default-800"
               size="sm"
               variant="flat"
             >
-              {programName}
+              {student.branch_name || "Unknown"}
             </Chip>
           );
-        }
+
+        case "program":
+          return (
+            <Chip
+              className="rounded-xl bg-default-100 px-[6px] capitalize text-default-800"
+              size="sm"
+              variant="flat"
+            >
+              {Array.isArray(student.program_names) &&
+              student.program_names.length > 0
+                ? student.program_names.join(", ")
+                : "No Program"}
+            </Chip>
+          );
 
         case "date_of_birth":
           return new Intl.DateTimeFormat("en-US", {
@@ -404,7 +333,12 @@ console.log("data",data)
 
         case "status":
           return <StatusStudentProp status={cellValue as StatusStudent} />;
-
+        case "created_at":
+          return new Intl.DateTimeFormat("en-US", {
+            year: "numeric",
+            month: "long",
+            day: "numeric",
+          }).format(new Date(student.created_at));
         case "name":
           return (
             <div className={"min-w-[250px]"}>
@@ -582,9 +516,11 @@ console.log("data",data)
                       onValueChange={setWorkerTypeFilter}
                     >
                       <Radio value="all">All</Radio>
-                      <Radio value="1">Funmall TK</Radio>
-                      <Radio value="2">OCIC Sakura Avenue</Radio>
-                      <Radio value="3">Peng Hout Boueng Snor</Radio>
+                      {branches.map((branch) => (
+                        <Radio key={branch.id} value={branch.id}>
+                          {branch.name}
+                        </Radio>
+                      ))}
                     </RadioGroup>
 
                     <RadioGroup

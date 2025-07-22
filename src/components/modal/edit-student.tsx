@@ -6,6 +6,8 @@ import {
   Button,
   Divider,
   Input,
+  Listbox,
+  ListboxItem,
   Modal,
   ModalBody,
   ModalContent,
@@ -22,10 +24,12 @@ import nationalities from "@/components/types/nationalities";
 
 type BranchObject = { id: string; name: string };
 type User = { id: string; name: string };
-type Program = { id: string; name: string; branch_name: string };
+type Program = {
+  branch_id: string; id: string; name: string; branch_name: string 
+};
 
 type EditStudentProps = {
-  student: Student;
+  student: Student & { programs?: { id: string; name: string }[] };
   onUpdate: (updatedStudent: Student) => void;
   trigger?: React.ReactNode;
 };
@@ -37,110 +41,124 @@ export default function EditStudent({ student, onUpdate, trigger }: EditStudentP
   const [programs, setPrograms] = useState<Program[]>([]);
   const [users, setUsers] = useState<User[]>([]);
   const [error, setError] = useState<string | null>(null);
-  const [gender, setGender] = useState<string>(student.gender ?? "");
+
+  const [gender, setGender] = useState<string>(student.gender ?? "male");
   const [status, setStatus] = useState<string>(student.status ?? "active");
-  const [selectedBranchId, setSelectedBranchId] = useState<string | null>(student.branch ?? null);
-  const [selectedProgramId, setSelectedProgramId] = useState<string | null>(student.program ?? null);
+  const [selectedBranchId, setSelectedBranchId] = useState<string | null>(student.branch_id ?? null);
+  const [selectedModifiedBy, setSelectedModifiedBy] = useState<string | null>(student.modified_by ?? null);
   const nationalityCode = nationalities.find((n) => n.name === student.nationality)?.code;
   const [selectedNationality, setSelectedNationality] = useState<string | undefined>(nationalityCode);
-  const [selectedModifiedBy, setSelectedModifiedBy] = useState<string | null>(student.modified_by ?? null);
+const [selectedProgramIds, setSelectedProgramIds] = useState<string[]>([]);
+const programNames: string[] = student.program_names || [];
 
-  useEffect(() => {
-    const fetchData = async () => {
-      const [{ data: branchData }, { data: programData }, { data: userList }] = await Promise.all([
-        supabase.rpc("get_all_branches"),
-        supabase.rpc("get_all_programs"),
-        supabase.rpc("get_all_users"),
-      ]);
-      if (branchData) setBranches(branchData);
-      if (programData) setPrograms(programData);
-      if (userList) setUsers(userList);
-    };
+useEffect(() => {
+  const fetchData = async () => {
+    const [{ data: branchData }, { data: programData }, { data: userList }] = await Promise.all([
+      supabase.rpc("get_all_branches"),
+      supabase.rpc("get_all_programs"),
+      supabase.rpc("get_all_users"),
+    ]);
 
-    fetchData();
-  }, []);
+    if (branchData) setBranches(branchData);
+    if (userList) setUsers(userList);
 
-  const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
-    event.preventDefault();
-    setError(null);
+    if (programData) {
+      setPrograms(programData); // ✅ only set once
 
-    const formData = new FormData(event.currentTarget);
+      // ✅ Match existing program names once and cleanly
+      if (student.programs && Array.isArray(student.programs)) {
+  const ids = student.programs.map(p => p.id);
+  setSelectedProgramIds(ids);
+}
 
-    const parseDateOrNull = (val: FormDataEntryValue | null) => val?.toString().trim() || null;
-    const rawGender = gender;
-    const rawStatus = status;
-
-    if (!["male", "female", "other"].includes(rawGender)) {
-      setError("Gender must be 'male', 'female', or 'other'.");
-      return;
     }
-
-    if (!["active", "inactive", "hold", "graduated"].includes(rawStatus)) {
-      setError("Invalid status.");
-      return;
-    }
-
-    // Image handling
-    let imageUrl = student.image_url ?? "";
-    const imageFile = formData.get("image") as File | null;
-
-    if (imageFile && imageFile.name) {
-      const fileExt = imageFile.name.split(".").pop();
-      const fileName = `${Date.now()}_${Math.random().toString(36).substring(2)}.${fileExt}`;
-      const filePath = `students/${fileName}`;
-
-      const { error: uploadError } = await supabase.storage
-        .from("student-images")
-        .upload(filePath, imageFile);
-
-      if (uploadError) {
-        setError(`Image upload failed: ${uploadError.message}`);
-        return;
-      }
-
-      const { data: publicUrlData } = supabase.storage
-        .from("student-images")
-        .getPublicUrl(filePath);
-
-      imageUrl = publicUrlData?.publicUrl || "";
-    }
-
-    const payload = {
-      _id: student.id,
-      _first_name: formData.get("first_name"),
-      _last_name: formData.get("last_name"),
-      _gender: rawGender,
-      _date_of_birth: parseDateOrNull(formData.get("dob")),
-      _place_of_birth: formData.get("pob"),
-      _nationality: formData.get("nationality"),
-      _phone: formData.get("phone"),
-      _email: formData.get("email"),
-      _password: "12345678",
-      _mother_name: formData.get("mother_name"),
-      _mother_occupation: formData.get("mother_occupation"),
-      _father_name: formData.get("father_name"),
-      _father_occupation: formData.get("father_occupation"),
-      _address: formData.get("address"),
-      _parent_contact: formData.get("parent_contact"),
-      _image_url: imageUrl,
-      _admission_date: parseDateOrNull(formData.get("admission_date")),
-      _status: rawStatus,
-      _branch: selectedBranchId,
-      _program: selectedProgramId,
-      _insurance_number: formData.get("insurance_number"),
-      _insurance_expiry: parseDateOrNull(formData.get("insurance_expiry_date")),
-      _modified_by: selectedModifiedBy,
-    };
-
-    const result = await supabase.rpc("update_student", payload);
-    if (result.error) {
-      console.error("Update Error:", result.error.message);
-      return setError(`Update failed: ${result.error.message}`);
-    }
-
-    onUpdate?.(student);
-    onOpenChange();
   };
+
+  fetchData();
+}, [student]);
+
+useEffect(() => {
+  if (student && student.program_names) {
+    const matchedProgramIds = programs
+      .filter((p) => student.program_names.includes(p.name))
+      .map((p) => p.id.toString());
+
+    setSelectedProgramIds(matchedProgramIds);
+  }
+}, [student, programs]);
+
+const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
+  event.preventDefault();
+  setError(null);
+
+  const formData = new FormData(event.currentTarget);
+
+  // Upload image if changed
+  let imageUrl = student.image_url ?? "";
+  const imageFile = formData.get("image") as File | null;
+  if (imageFile && imageFile.name) {
+    const ext = imageFile.name.split(".").pop();
+    const fileName = `${Date.now()}_${Math.random().toString(36).slice(2)}.${ext}`;
+    const filePath = `students/${fileName}`;
+
+    const { error: uploadError } = await supabase.storage
+      .from("student-images")
+      .upload(filePath, imageFile);
+
+    if (uploadError) {
+      setError("Image upload failed: " + uploadError.message);
+      return;
+    }
+
+    const { data: publicUrl } = supabase.storage
+      .from("student-images")
+      .getPublicUrl(filePath);
+    imageUrl = publicUrl?.publicUrl ?? imageUrl;
+  }
+
+const payload = {
+  _id: String(student.id),
+  _first_name: formData.get("first_name")?.toString() || "",
+  _last_name: formData.get("last_name")?.toString() || "",
+  _gender: gender,
+  _date_of_birth: formData.get("dob") || null,
+  _place_of_birth: formData.get("pob")?.toString() || "",
+  _nationality: nationalities.find((n) => n.code === selectedNationality)?.name || "",
+  _mother_name: formData.get("mother_name")?.toString() || "",
+  _mother_occupation: formData.get("mother_occupation")?.toString() || "",
+  _father_name: formData.get("father_name")?.toString() || "",
+  _father_occupation: formData.get("father_occupation")?.toString() || "",
+  _address: formData.get("address")?.toString() || "",
+  _parent_contact: formData.get("parent_contact")?.toString() || "",
+  _phone: formData.get("phone")?.toString() || "",
+  _email: formData.get("email")?.toString() || "",
+  _password: student.password || "",
+  _branch: selectedBranchId || null,
+  _status: status,
+  _admission_date: formData.get("admission_date") || null,
+  _image_url: imageUrl,
+  _insurance_number: formData.get("insurance_number")?.toString() || "",
+  _insurance_expiry: formData.get("insurance_expiry_date") || null,
+  _modified_by: selectedModifiedBy || null,
+ _program_ids: selectedProgramIds,
+
+};
+
+console.log("student.id:", student.id);
+console.log("selectedBranchId:", selectedBranchId);
+console.log("selectedModifiedBy:", selectedModifiedBy);
+console.log("selectedProgramIds:", selectedProgramIds);
+
+  const { error: updateError } = await supabase.rpc("update_student", payload);
+
+  if (updateError) {
+    setError("Update failed: " + updateError.message);
+    return;
+  }
+
+  onUpdate({ ...student, ...payload });
+  onOpenChange();
+};
 
   return (
     <>
@@ -190,6 +208,7 @@ export default function EditStudent({ student, onUpdate, trigger }: EditStudentP
                 <Input name="address" label="Address" defaultValue={student.address} />
                 <Input name="parent_contact" label="Parent Contact" defaultValue={student.parent_contact} />
                 <Input name="admission_date" label="Admission Date" type="date" defaultValue={student.admission_date?.split("T")[0]} />
+
                 <Autocomplete
                   name="branch"
                   label="Branch"
@@ -199,15 +218,39 @@ export default function EditStudent({ student, onUpdate, trigger }: EditStudentP
                 >
                   {(item) => <AutocompleteItem key={item.id}>{item.name}</AutocompleteItem>}
                 </Autocomplete>
-                <Autocomplete
-                  name="program"
-                  label="Program"
-                  selectedKey={selectedProgramId ?? undefined}
-                  onSelectionChange={(key) => setSelectedProgramId(key?.toString() ?? null)}
-                  items={programs}
-                >
-                  {(item) => <AutocompleteItem key={item.id}>{item.name}</AutocompleteItem>}
-                </Autocomplete>
+<div>
+  <label className="block mb-1 text-sm">
+    Programs<span className="text-red-500">*</span>
+  </label>
+  <div className="w-full max-w-[400px] border px-2 py-2 rounded-xl border-default-200 dark:border-default-100">
+<Listbox
+  selectedKeys={new Set(selectedProgramIds)}
+  items={programs.filter((p) =>
+    selectedBranchId ? p.branch_id === selectedBranchId : true
+  )}
+  selectionMode="multiple"
+  variant="flat"
+  onSelectionChange={(keys) => {
+    if (keys instanceof Set) {
+      const values = Array.from(keys).map((k) => k.toString());
+      setSelectedProgramIds(values);
+    }
+  }}
+>
+  {(program: Program) => (
+    <ListboxItem key={program.id} textValue={program.name}>
+      <div className="flex flex-col">
+        <span className="text-small font-medium">{program.name}</span>
+        <span className="text-tiny text-default-400">{program.branch_name}</span>
+      </div>
+    </ListboxItem>
+  )}
+</Listbox>
+
+  </div>
+</div>
+
+
                 <Autocomplete
                   name="modified_by"
                   label="Modified By"
@@ -217,6 +260,7 @@ export default function EditStudent({ student, onUpdate, trigger }: EditStudentP
                 >
                   {(user) => <AutocompleteItem key={user.id}>{user.name}</AutocompleteItem>}
                 </Autocomplete>
+
                 <Autocomplete
                   name="status"
                   label="Status"
@@ -237,16 +281,14 @@ export default function EditStudent({ student, onUpdate, trigger }: EditStudentP
                   </div>
                 )}
                 <Input name="image" label="New Image (optional)" type="file" />
-
                 <Input name="insurance_number" label="Insurance Number" defaultValue={student.insurance_number ?? ""} />
                 <Input name="insurance_expiry_date" label="Insurance Expiry Date" type="date" defaultValue={student.insurance_expiry?.split("T")[0]} />
               </div>
 
               {error && <p className="text-red-500 mt-4">{error}</p>}
-
               <Divider className="my-4" />
 
-              <div className="mt-6 flex w-full justify-end gap-2">
+              <div className="mt-6 flex justify-end gap-2">
                 <Button radius="full" variant="bordered" onPress={onOpenChange}>Cancel</Button>
                 <Button color="primary" radius="full" type="submit">Save Changes</Button>
               </div>

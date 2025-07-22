@@ -83,11 +83,15 @@ export type Trials = {
     modify_name: string[];
     updated_at: string;
     created_at: string;
-    // modified_by: number;
-    // modifier_name: string;
+    modified_by: number;
+    modifier_name: string;
 };
 
 export interface Trial {
+    program(program: any): import("react").ReactNode;
+    handle_by(handle_by: any): unknown;
+    assign_by(assign_by: any): unknown;
+    branch: any;
     id: number;
     client: string;
     phone: string;
@@ -104,6 +108,6 @@ export interface Trial {
     modify_name: string[];
     updated_at: string;
     created_at: string;
-    // modified_by: number;
-    // modifier_name: string;
+    modified_by: number;
+    modifier_name: string;
 }

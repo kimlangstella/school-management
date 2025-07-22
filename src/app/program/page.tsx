@@ -105,8 +105,8 @@ const handleDelete = async (id: string) => {
                 description={program.description}
                 age={program.age}
                 branch={getBranchNameById(program.branch_id)} 
-                onEdit={() => setSelectedProgram(program)}
-                onDelete={() => handleDelete(program.id)}
+                // onEdit={() => setSelectedProgram(program)}
+                // onDelete={() => handleDelete(program.id)}
               />
             ))
           ) : (
