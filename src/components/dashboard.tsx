@@ -17,6 +17,7 @@ import { Icon } from "@iconify/react";
 import { useMediaQuery } from "usehooks-ts";
 import { supabase } from "../../lib/supabaseClient";
 import Image from "next/image";
+
 type UserObject = {
   id: number;
   name: string;
@@ -45,22 +46,29 @@ export default function DashboardLayout({
 
   const handleLogout = async () => {
     await supabase.auth.signOut();
-    localStorage.clear();
     router.push("/login");
   };
 
+  // ✅ Fetch user profile from Supabase
   useEffect(() => {
-    if (typeof window === "undefined") return;
+    const fetchUser = async () => {
+      const { data: sessionData } = await supabase.auth.getSession();
+      const userId = sessionData.session?.user.id;
 
-    try {
-      const storedUser = localStorage.getItem("user");
-      if (storedUser) {
-        const parsedUser = JSON.parse(storedUser);
-        setUserInfo(parsedUser);
+      if (!userId) return;
+
+      const { data, error } = await supabase.rpc("get_user_by_id", { _id: userId });
+
+      if (error) {
+        console.error("Error fetching profile:", error.message);
+        return;
       }
-    } catch (error) {
-      console.error("Error parsing user:", error);
-    }
+
+      const profile = Array.isArray(data) ? data[0] : data;
+      setUserInfo(profile);
+    };
+
+    fetchUser();
   }, []);
 
   return (
@@ -172,11 +180,8 @@ export default function DashboardLayout({
               className={cn("flex max-w-full flex-col", { hidden: isCompact })}
             >
               <p className="truncate text-small font-medium text-default-600 capitalize">
-                {userInfo?.name}
+                {userInfo?.name || "Loading..."}
               </p>
-              {/* <p className="truncate text-small font-medium text-default-600 capitalize">
-                {userInfo?.profile_url}
-              </p> */}
             </div>
           </div>
         </header>

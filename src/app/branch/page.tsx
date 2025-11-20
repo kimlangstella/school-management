@@ -1,6 +1,6 @@
 "use client";
 
-import React from "react";
+import React, { Suspense } from "react";
 import BranchCard from "@/components/card/branch-card";
 import {Button, Chip} from "@heroui/react";
 import {Icon} from "@iconify/react";
@@ -20,7 +20,10 @@ export default function TrialPage() {
                         <AddBranch />
                       </div>
             </div>
-            <BranchCard/>
+            <Suspense fallback={<div>Loading table...</div>}>
+  <BranchCard />
+</Suspense>
+
         </div>
     );
 }

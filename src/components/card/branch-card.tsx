@@ -1,7 +1,9 @@
 'use client';
 
-import type { ButtonProps, CardProps } from '@heroui/react';
-import React, { useEffect, useState } from 'react';
+import React from 'react';
+import { useQuery } from '@tanstack/react-query';
+import { supabase } from '../../../lib/supabaseClient';
+
 import {
   ResponsiveContainer,
   RadialBarChart,
@@ -9,6 +11,7 @@ import {
   Cell,
   PolarAngleAxis,
 } from 'recharts';
+
 import {
   Card,
   Button,
@@ -19,7 +22,7 @@ import {
   cn,
 } from '@heroui/react';
 import { Icon } from '@iconify/react';
-import { supabase } from '../../../lib/supabaseClient';
+import type { ButtonProps, CardProps } from '@heroui/react';
 
 type Branch = {
   id: string;
@@ -40,59 +43,64 @@ type CircleChartProps = {
   total: number;
 };
 
-export default function BranchCard() {
-  const [branches, setBranches] = useState<Branch[]>([]);
-  const [error, setError] = useState<string | null>(null);
-
-
-useEffect(() => {
-  fetchBranchesWithStudents();
-}, []);
-
-const fetchBranchesWithStudents = async () => {
+// ✅ Extract queryFn to avoid recreation on rerenders
+const fetchBranchesWithActiveStudents = async (): Promise<Branch[]> => {
   const [branchRes, studentRes] = await Promise.all([
-    supabase.rpc("get_all_branches"),
-    supabase.rpc("get_all_students_with_programs")
+    supabase.rpc('get_all_branches'),
+    supabase.rpc('get_all_students'),
   ]);
 
   if (branchRes.error || studentRes.error) {
-    setError(branchRes.error?.message || studentRes.error?.message || "Unknown error");
-    return;
+    throw new Error(branchRes.error?.message || studentRes.error?.message || 'Unknown error');
   }
 
   const branches = branchRes.data;
   const students = studentRes.data;
 
-  // Count students per branch
- const branchesWithCounts = branches.map((branch: { id: any; }) => {
-  const activeStudents = students.filter(
-    (s: { branch_id: any; status: string; }) => s.branch_id === branch.id && s.status === "active"
-  ).length;
+  return branches.map((branch: { id: any; name: string }) => {
+    const activeStudents = students.filter(
+      (s: { branch_id: any; status: string }) =>
+        s.branch_id === branch.id && s.status === 'active'
+    ).length;
 
-  return {
-    ...branch,
-    active_students: activeStudents
-  };
-});
-
-  setBranches(branchesWithCounts);
+    return {
+      ...branch,
+      active_students: activeStudents,
+    };
+  });
 };
 
-
+export default function BranchCard() {
   const chartColors: ButtonProps['color'][] = ['default', 'primary', 'secondary', 'success', 'warning'];
 
-const chartData: CircleChartProps[] = branches.map((branch, index) => ({
-  title: branch.name,
-  color: chartColors[index % chartColors.length],
-  total: branch.active_students,
-  chartData: [
-    {
-      name: 'Active Student',
-      value: branch.active_students,
-      fill: `hsl(var(--heroui-${chartColors[index % chartColors.length]}))`,
-    },
-  ],
-}));
+  const {
+    data: branches = [],
+    isLoading,
+    isError,
+    error,
+  } = useQuery({
+    queryKey: ['branches-with-students'],
+    queryFn: fetchBranchesWithActiveStudents,
+    staleTime: 1000 * 60 * 10, // 10 minutes
+    refetchOnWindowFocus: false,
+    retry: 1,
+  });
+
+  if (isLoading) return <p>Loading branches...</p>;
+  if (isError) return <p className="text-red-500">Error: {error?.message}</p>;
+
+  const chartData: CircleChartProps[] = branches.map((branch, index) => ({
+    title: branch.name,
+    color: chartColors[index % chartColors.length],
+    total: branch.active_students,
+    chartData: [
+      {
+        name: 'Active Student',
+        value: branch.active_students,
+        fill: `hsl(var(--heroui-${chartColors[index % chartColors.length]}))`,
+      },
+    ],
+  }));
 
   return (
     <dl className="grid w-full grid-cols-1 gap-5 md:grid-cols-2 lg:grid-cols-4">
@@ -119,23 +127,19 @@ const CircleChartCard = React.forwardRef<
     >
       <div className="flex flex-col gap-y-2 p-4 pb-0">
         <div className="flex items-center justify-between gap-x-2">
-          <dt>
-            <h3 className="text-small font-medium text-default-500">{title}</h3>
-          </dt>
-          <div className="flex items-center justify-end gap-x-2">
-            <Dropdown classNames={{ content: 'min-w-[120px]' }} placement="bottom-end">
-              <DropdownTrigger>
-                <Button isIconOnly radius="full" size="sm" variant="light">
-                  <Icon height={16} icon="solar:menu-dots-bold" width={16} />
-                </Button>
-              </DropdownTrigger>
-              <DropdownMenu itemClasses={{ title: 'text-tiny' }} variant="flat">
-                <DropdownItem key="view-details">View Details</DropdownItem>
-                <DropdownItem key="export-data">Export Data</DropdownItem>
-                <DropdownItem key="set-alert">Set Alert</DropdownItem>
-              </DropdownMenu>
-            </Dropdown>
-          </div>
+          <h3 className="text-small font-medium text-default-500">{title}</h3>
+          <Dropdown classNames={{ content: 'min-w-[120px]' }} placement="bottom-end">
+            <DropdownTrigger>
+              <Button isIconOnly radius="full" size="sm" variant="light">
+                <Icon height={16} icon="solar:menu-dots-bold" width={16} />
+              </Button>
+            </DropdownTrigger>
+            <DropdownMenu itemClasses={{ title: 'text-tiny' }} variant="flat">
+              <DropdownItem key="view-details">View Details</DropdownItem>
+              <DropdownItem key="export-data">Export Data</DropdownItem>
+              <DropdownItem key="set-alert">Set Alert</DropdownItem>
+            </DropdownMenu>
+          </Dropdown>
         </div>
       </div>
       <div className="flex h-full gap-x-3">
@@ -157,8 +161,8 @@ const CircleChartCard = React.forwardRef<
             <PolarAngleAxis angleAxisId={0} domain={[0, total]} tick={false} type="number" />
             <RadialBar
               angleAxisId={0}
-              animationDuration={1000}
-              animationEasing="ease"
+              animationDuration={800}
+              animationEasing="ease-in-out"
               background={{
                 fill: 'hsl(var(--heroui-default-100))',
               }}

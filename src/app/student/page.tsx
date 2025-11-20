@@ -1,20 +1,20 @@
 "use client";
 
-import React from "react";
-import StudentTable from "@/components/table/student-table";
-import AddStudent from "@/components/modal/add-student";
-import { Student } from "@/components/types/columns";
+import dynamic from "next/dynamic";
+import React, { Suspense } from "react";
+
+// Dynamically import the student table component
+const StudentTable = dynamic(() => import("@/components/table/student-table"), {
+  loading: () => <p className="p-8">Loading students...</p>,
+  ssr: false, 
+});
 
 export default function StudentPage() {
-    return (
-        <>
-        {/* <div className="flex justify-between items-center mb-4">
-            <AddStudent onUpdate={function (updatedStudent: Student): void {
-                    throw new Error("Function not implemented.");
-                } }></AddStudent>
-        </div> */}
-        <div className="p-8">
-            <StudentTable />
-        </div></>
-    );
+  return (
+    <div className="p-8">
+      <Suspense fallback={<div>Loading table...</div>}>
+        <StudentTable />
+      </Suspense>
+    </div>
+  );
 }

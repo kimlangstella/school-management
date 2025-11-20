@@ -1,35 +1,30 @@
-import { createMiddlewareClient } from '@supabase/auth-helpers-nextjs'
+// middleware.ts
 import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
 
 export async function middleware(req: NextRequest) {
-  const res = NextResponse.next()
+  const { pathname } = req.nextUrl;
 
-  const protectedPaths = ["/dashboard", "/profile"]
-  const isProtected = protectedPaths.some(path =>
-    req.nextUrl.pathname.startsWith(path)
-  );
+  const protectedPaths = ["/dashboard", "/profile"];
+  const isProtected = protectedPaths.some(path => pathname.startsWith(path));
+  const isLoginPage = pathname === "/login";
 
-  if (!isProtected) {
-    return res 
+  if (!isProtected && !isLoginPage) return NextResponse.next();
+
+  const token = req.cookies.get('sb-access-token')?.value;
+
+  if (!token && isProtected) {
+    return NextResponse.redirect(new URL("/login", req.url));
   }
 
-  const supabase = createMiddlewareClient({ req, res })
-  const { data: { session } } = await supabase.auth.getSession()
-
-  const isLoginPage = req.nextUrl.pathname === "/login"
-
-  if (!session && !isLoginPage) {
-    return NextResponse.redirect(new URL("/login", req.url))
+  if (token && isLoginPage) {
+    return NextResponse.redirect(new URL("/", req.url));
   }
 
-  if (session && isLoginPage) {
-    return NextResponse.redirect(new URL("/", req.url))
-  }
-
-  return res
+  return NextResponse.next();
 }
 
+// Only run middleware on protected paths:
 export const config = {
-  matcher: ['/((?!_next/static|_next/image|favicon.ico).*)'],
-}
+  matcher: ['/dashboard/:path*', '/profile/:path*', '/login'],
+};

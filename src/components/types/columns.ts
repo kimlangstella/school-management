@@ -1,7 +1,7 @@
 import { SuccessCircleSvg } from "@/components/icon/success-circle";
 import { DangerCircleSvg } from "@/components/icon/danger-circle";
 import { WarningCircleSvg } from "@/components/icon/warning-circle";
-import { JSX } from "react";
+import { JSX, ReactNode } from "react";
 import { StatusStudent } from "./student";
 
 export const columns = [
@@ -11,8 +11,8 @@ export const columns = [
   { name: "Nationality", uid: "nationality" },
   { name: "Date of Birth", uid: "date_of_birth" },
   { name: "Phone", uid: "phone" },
-{ name: "Branch", uid: "branch" },
-{ name: "Program", uid: "program" },
+  { name: "Branch", uid: "branch" },
+  { name: "Program", uid: "program" },
 
   { name: "Status", uid: "status" },
   { name: "Admission Date", uid: "admission_date" },
@@ -22,6 +22,18 @@ export const columns = [
   { name: "Modified by", uid: "modified_by" },
   { name: "Created at", uid: "created_at" },
   { name: "Updated at", uid: "updated_at" },
+  {
+    name: "Payment Status",
+    uid: "payment_status",
+  },
+  {
+    name: "Payment Note",
+    uid: "payment_note",
+  },
+  {
+  name: "Payment End Date",
+  uid: "payment_end_date",
+},
 ];
 
 export type ColumnsKey =
@@ -41,8 +53,10 @@ export type ColumnsKey =
   | "modified_by"
   | "created_at"
   | "updated_at"
-  | "actions";
-
+  | "actions"
+  | "payment_status"
+  | "payment_noted"
+  | "payment_end_date";
 export const INITIAL_VISIBLE_COLUMNS: ColumnsKey[] = [
   "name",
   "gender",
@@ -51,6 +65,8 @@ export const INITIAL_VISIBLE_COLUMNS: ColumnsKey[] = [
   "date_of_birth",
   "status",
   "branch",
+  "payment_status",
+  "program",
   "actions",
 ];
 
@@ -58,12 +74,19 @@ export const statusColorMap: Record<StatusStudent, JSX.Element> = {
   active: SuccessCircleSvg,
   inactive: DangerCircleSvg,
   graduated: WarningCircleSvg,
+  hold: WarningCircleSvg,
 };
-
+export const statusPaid : Record <Payment,JSX.Element>={
+  paid : SuccessCircleSvg,
+  unpaid:DangerCircleSvg
+}
 export type Gender = "male" | "female" | "other"; // based on DB CHECK
-export type StatusStudent = "active" | "inactive" | "graduated";
-
+export type StatusStudent = "active" | "inactive" | "hold";
+export type Payment = "paid" | "unpaid";
 export interface Student {
+  created_by_name: ReactNode;
+  modified_by_name: string;
+  branch_name: string;
   id: string; // UUID from DB
   first_name: string;
   last_name: string;
@@ -108,4 +131,5 @@ export interface Student {
 
   created_at: string;
   updated_at: string;
+  payment_end_date?: string;
 }

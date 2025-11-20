@@ -56,6 +56,7 @@ import {
   Trial,
   Trials,
 } from "@/components/types/trials";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { StatusTrialProp } from "@/components/icon/StatusTrialProp";
 import AddTrail from "../modal/add-trial";
 type Program = {
@@ -78,8 +79,10 @@ export default function StudentTable({
   const [error, setError] = useState<string | null>(null);
   const [programs, setPrograms] = useState<{ id: string; name: string }[]>([]);
   const [users, setUsers] = useState<{ id: string; full_name: string }[]>([]);
-  const [trials, setTrials] = useState<Trial[]>([]);
-  const [trialLength, setTrialLength] = useState<number>(0);
+
+
+
+
   const [filterValue, setFilterValue] = useState("");
   const [selectedKeys, setSelectedKeys] = useState<Selection>(new Set([]));
   const [visibleColumns, setVisibleColumns] = useState<Selection>(
@@ -91,67 +94,98 @@ export default function StudentTable({
     column: "name",
     direction: "ascending",
   });
-  const [branches, setBranches] = useState<Branch[]>([]);
+  // const [branches, setBranches] = useState<Branch[]>([]);
   const [workerTypeFilter, setWorkerTypeFilter] = React.useState("all");
   const [statusFilter, setStatusFilter] = React.useState("all");
   const [startDateFilter, setStartDateFilter] = React.useState("all");
 const [editModalOpen, setEditModalOpen] = useState(false);
 const [editingTrial, setEditingTrial] = useState<Trial | null>(null);
 
-  const handleDelete = async (id: string) => {
-    const { error } = await supabase.rpc("delete_trail", { _id: id });
 
-    if (error) {
-      console.error("Failed to delete:", error.message);
-      alert("Error: " + error.message);
-    } else {
-      alert("Deleted successfully!");
-      fetchTrials();
-    }
-  };
-  useEffect(() => {
-    fetchTrials();
-    fetchUsers();
-    fetchBranches();
-  }, []);
+const queryClient = useQueryClient();
 
-  const fetchTrials = async () => {
-    try {
-      const { data, error } = await supabase.rpc("get_all_trial");
-      console.log("data", data);
-      if (error) {
-        console.error("Supabase RPC Error:", error);
-        setError(error.message || "Unknown error from Supabase.");
-        return;
-      }
+const {
+  data: trials = [],
+  isLoading: isTrialsLoading,
+  isError: isTrialsError,
+  error: trialsError,
+} = useQuery({
+  queryKey: ["trials"],
+  queryFn: async () => {
+    const { data, error } = await supabase.rpc("get_all_trial").range(0, 49);;
+    if (error) throw new Error(error.message);
+    return data;
+  },
+  staleTime: 5 * 60 * 1000, 
+cacheTime: 10 * 60 * 1000 
+});
+const trialLength = Array.isArray(trials) ? trials.length : 0;
+const handleDelete = async (id: string) => {
+  const { error } = await supabase.rpc("delete_trail", { _id: id });
 
-      if (!data || !Array.isArray(data)) {
-        setError("Invalid data format received.");
-        return;
-      }
+  if (error) {
+    console.error("Failed to delete:", error.message);
+    alert("Error: " + error.message);
+  } else {
+    alert("Deleted successfully!");
+    queryClient.invalidateQueries({ queryKey: ["trials"] }); // ✅ Refetch only trials
+  }
+};
 
-      const mapped = data.map((st: Trial) => ({ ...st }));
-      setTrials(mapped);
-      setTrialLength(mapped.length);
-    } catch (err) {
-      console.error("Failed to fetch data from Supabase:", err);
-      setError("Something went wrong while fetching data.");
-    }
-  };
+//   useEffect(() => {
+//     fetchTrials();
+//     fetchUsers();
+//     fetchBranches();
+//   }, []);
 
-  const fetchUsers = async () => {
-    const { data } = await supabase.rpc("get_all_users");
-    if (data) setUsers(data);
-  };
-const fetchBranches = async () => {
-    const { data, error } = await supabase.rpc("get_all_branches");
-    console.log("data",data)
-    if (error) {
-      setError(error.message);
-    } else {
-      setBranches(data as Branch[]);
-    }
-  };
+//   const fetchTrials = async () => {
+//     try {
+//       const { data, error } = await supabase.rpc("get_all_trial");
+//       console.log("data", data);
+//       if (error) {
+//         console.error("Supabase RPC Error:", error);
+//         setError(error.message || "Unknown error from Supabase.");
+//         return;
+//       }
+
+//       if (!data || !Array.isArray(data)) {
+//         setError("Invalid data format received.");
+//         return;
+//       }
+
+//       const mapped = data.map((st: Trial) => ({ ...st }));
+//       setTrials(mapped);
+//       setTrialLength(mapped.length);
+//     } catch (err) {
+//       console.error("Failed to fetch data from Supabase:", err);
+//       setError("Something went wrong while fetching data.");
+//     }
+//   };
+
+//   const fetchUsers = async () => {
+//     const { data } = await supabase.rpc("get_all_users");
+//     if (data) setUsers(data);
+//   };
+const fetchBranches = async (): Promise<Branch[]> => {
+  const { data, error } = await supabase.rpc("get_all_branches");
+  if (error) throw new Error(error.message);
+  return data as Branch[];
+};
+
+  const {
+    data: branches,
+    isLoading: branchesLoading,
+    isError: branchesError,
+    error: branchesFetchError,
+  } = useQuery({
+    queryKey: ["branches"],
+    queryFn: fetchBranches,
+    staleTime: 5 * 60 * 1000, 
+cacheTime: 10 * 60 * 1000  // 10 minutes
+  });
+
+
+
   const headerColumns = useMemo(() => {
     if (visibleColumns === "all") return trialColumn;
 
@@ -169,45 +203,44 @@ const fetchBranches = async () => {
       .filter((column) => Array.from(visibleColumns).includes(column.uid));
   }, [visibleColumns, sortDescriptor]);
 
-  const itemFilter = useCallback(
-    (col: Trial) => {
-      const allWorkerType = workerTypeFilter === "all";
-      const allStatus = statusFilter === "all";
-      const allStartDate = startDateFilter === "all";
+const itemFilter = useCallback(
+  (col: Trial) => {
+    const allWorkerType = workerTypeFilter === "all";
+    const allStatus = statusFilter === "all";
+    const allStartDate = startDateFilter === "all";
 
-return (
-  (allWorkerType ||
-    (typeof workerTypeFilter === "string" &&
-      workerTypeFilter.toLowerCase() === (col.branch_name?.toLowerCase() ?? ""))) &&
-  (allStatus || statusFilter === col.status.toLowerCase()) &&
-  (allStartDate ||
-    new Date(
-      new Date().getTime() -
-        +(startDateFilter.match(/(\d+)(?=Days)/)?.[0] ?? 0) *
-          24 *
-          60 *
-          60 *
-          1000
-    ) <= new Date(col.created_at))
+    const selectedBranch = branches.find((b) => b.id === workerTypeFilter);
+    const selectedBranchName = selectedBranch?.name;
+
+    const branchMatch =
+      allWorkerType || col.branch_name === selectedBranchName;
+
+    return (
+      branchMatch &&
+      (allStatus || statusFilter === col.status?.toLowerCase()) &&
+      (allStartDate ||
+        new Date(
+          new Date().getTime() -
+            +(startDateFilter.match(/(\d+)(?=Days)/)?.[0] ?? 0) *
+              24 * 60 * 60 * 1000
+        ) <= new Date(col.created_at))
+    );
+  },
+  [startDateFilter, statusFilter, workerTypeFilter, branches]
 );
 
-    },
-    [startDateFilter, statusFilter, workerTypeFilter]
-  );
+const filteredItems = useMemo(() => {
+  const safeTrials = Array.isArray(trials) ? trials : [];
+  let filteredUsers = [...safeTrials];
 
-  const filteredItems = useMemo(() => {
-    let filteredUsers = [...trials];
+  if (filterValue) {
+    filteredUsers = filteredUsers.filter((trial) =>
+      trial.client?.toLowerCase().includes(filterValue.toLowerCase())
+    );
+  }
 
-    if (filterValue) {
-      filteredUsers = filteredUsers.filter((trials) =>
-        trials.client.toLowerCase().includes(filterValue.toLowerCase())
-      );
-    }
-
-    filteredUsers = filteredUsers.filter(itemFilter);
-
-    return filteredUsers;
-  }, [filterValue, itemFilter, trials]);
+  return filteredUsers.filter(itemFilter);
+}, [filterValue, itemFilter, trials]);
 
   const pages = Math.ceil(filteredItems.length / rowsPerPage) || 1;
 
@@ -550,22 +583,18 @@ case "program_name": {
                 </PopoverTrigger>
                 <PopoverContent className="w-80">
                   <div className="flex w-full flex-col gap-6 px-2 py-4">
-                    <RadioGroup
-                      label="Branch"
-                      value={workerTypeFilter}
-                      onValueChange={setWorkerTypeFilter}
-                    >
-                      
-                      {/* {branches.map((branch) => (
-                        <Radio key={branch.id} value={branch.id}>
-                          {branch.name}
-                        </Radio>
-                      ))} */}
-                      <Radio value="all">All</Radio>
-                      <Radio value="FM">Funmall TK</Radio>
-                       <Radio value="PH">PengHout</Radio>
-                        <Radio value="OCIC">OCIC</Radio>
-                    </RadioGroup>
+ <RadioGroup
+  label="Branch"
+  value={workerTypeFilter}
+  onValueChange={setWorkerTypeFilter}
+>
+  <Radio value="all">All</Radio>
+  <Radio value="873bea75-e6c4-4c32-b625-d11dd4221a57">Funmall TK</Radio>
+  <Radio value="659308e2-436f-43d7-a258-5a30adeb55dc">PengHout</Radio>
+  <Radio value="67610209-6fd3-46a4-98bb-199d7a7faf27">OCIC</Radio>
+</RadioGroup>
+
+
 
                     <RadioGroup
                       label="StatusStudent"
@@ -734,7 +763,8 @@ case "program_name": {
             {trialLength}
           </Chip>
         </div>
-        <AddTrail onSuccess={fetchTrials} />
+        <AddTrail onSuccess={() => queryClient.invalidateQueries(["trials"])} />
+
       </div>
     );
   }, [trialLength]);
@@ -875,7 +905,8 @@ case "program_name": {
     editingId={editingTrial.id}
     initialData={editingTrial}
     onSuccess={async () => {
-      await fetchTrials();
+      await queryClient.invalidateQueries({ queryKey: ["trials"] });
+
       setEditModalOpen(false);
       setEditingTrial(null);
     }}

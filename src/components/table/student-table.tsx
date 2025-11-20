@@ -54,12 +54,15 @@ import {
   ColumnsKey,
   StatusStudent,
   Student,
+  statusPaid,
 } from "@/components/types/columns";
 import { supabase } from "../../../lib/supabaseClient";
 import nationalities from "@/components/types/nationalities";
 import EditStudent from "../modal/edit-student";
 import { EditLinearIcon } from "../icon/edit";
 import AddStudent from "../modal/add-student";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
+
 type Program = {
   id: string;
   name: string;
@@ -78,7 +81,7 @@ export default function StudentTable() {
   const [visibleColumns, setVisibleColumns] = useState<Selection>(
     new Set(INITIAL_VISIBLE_COLUMNS)
   );
-  const [rowsPerPage] = useState(10);
+  const [rowsPerPage] = useState(20);
   const [page, setPage] = useState(1);
   const [isEditOpen, setIsEditOpen] = useState(false);
   const [users, setUsers] = useState<{ id: string; full_name: string }[]>([]);
@@ -86,39 +89,101 @@ export default function StudentTable() {
     column: "name",
     direction: "ascending",
   });
+const [programFilter, setProgramFilter] = React.useState("all");
 
   const [workerTypeFilter, setWorkerTypeFilter] = React.useState("all");
   const [statusFilter, setStatusFilter] = React.useState("all");
   const [startDateFilter, setStartDateFilter] = React.useState("all");
-  const [students, setStudents] = useState<any[]>([]);
-  const [branches, setBranches] = useState<Branch[]>([]);
   const [programs, setPrograms] = useState<Program[]>([]);
   const [error, setError] = useState<string | null>(null);
 
-  const fetchStudents = async () => {
-    const { data, error } = await supabase.rpc("get_all_students");
-    console.log("data", data);
-    if (error) {
-      console.error("❌ Supabase error:", error.message);
-    } else {
-      console.log("✅ Data fetched from Supabase:", data);
-      setStudents(data);
-    }
-  };
+const PAGE_SIZE = 500; // tweak 200–1000 if you want smaller chunks
+
+const fetchStudents = async () => {
+  let all: any[] = [];
+  let offset = 0;
+
+  for (;;) {
+    const { data, error } = await supabase.rpc(
+      "get_all_students_with_programs_offset", // <-- the paginated RPC
+      {
+        p_limit: PAGE_SIZE,
+        p_offset: offset,
+        p_status: null,     // plug filters if you have them
+        p_branch_id: null,
+      }
+    );
+
+    if (error) throw new Error(error.message);
+
+    const chunk = data ?? [];
+    all.push(...chunk);
+
+    if (chunk.length < PAGE_SIZE) break; // last page reached
+    offset += chunk.length;
+  }
+
+  return all; 
+};
+
+// Call the function and log the result (optional)
+fetchStudents()
+  .then((students) => console.log("Fetched students:", students))
+  .catch((err) => console.error("Error fetching students:", err.message));
+
+
+
   const fetchBranches = async () => {
     const { data, error } = await supabase.rpc("get_all_branches");
-    console.log("data", data);
-    if (error) {
-      setError(error.message);
-    } else {
-      setBranches(data as Branch[]);
-    }
+    if (error) throw new Error(error.message);
+    return data;
   };
-  useEffect(() => {
-    fetchBranches();
-    fetchStudents();
-  }, []);
 
+  // Inside component
+  const queryClient = useQueryClient();
+
+  const {
+    data: students,
+    isLoading: studentsLoading,
+    isError: studentsError,
+    error: studentsFetchError,
+  } = useQuery({
+    queryKey: ["students"],
+    queryFn: fetchStudents,
+    staleTime: 5 * 60 * 1000, 
+cacheTime: 10 * 60 * 1000 
+  });
+
+  const {
+    data: branches,
+    isLoading: branchesLoading,
+    isError: branchesError,
+    error: branchesFetchError,
+  } = useQuery({
+    queryKey: ["branches"],
+    queryFn: fetchBranches,
+    staleTime: 5 * 60 * 1000, 
+cacheTime: 10 * 60 * 1000  // 10 minutes
+  });
+
+type Program = { id: string; name: string; description: string; age: string; branch_id: string };
+
+const fetchPrograms = async () => {
+  const { data, error } = await supabase.rpc("get_all_programs");
+  if (error) throw new Error(error.message);
+  return data as Program[];
+};
+
+const {
+  data: allPrograms,
+  isLoading: programsLoading,
+  isError: programsError,
+} = useQuery({
+  queryKey: ["programs"],
+  queryFn: fetchPrograms,
+  staleTime: 5 * 60 * 1000,
+  cacheTime: 10 * 60 * 1000,
+});
   const handleDelete = async (id: string) => {
     const confirmDelete = window.confirm("Delete this student?");
     if (!confirmDelete) return;
@@ -128,7 +193,7 @@ export default function StudentTable() {
     if (error) {
       setError(error.message);
     } else {
-      fetchStudents(); // ✅ will now work
+      queryClient.invalidateQueries({ queryKey: ["students"] }); 
     }
   };
 
@@ -149,51 +214,92 @@ export default function StudentTable() {
       .filter((column) => Array.from(visibleColumns).includes(column.uid));
   }, [visibleColumns, sortDescriptor]);
 
-  const itemFilter = useCallback(
-    (col: Student) => {
-      const allWorkerType = workerTypeFilter === "all";
-      const allStatus = statusFilter === "all";
-      const allStartDate = startDateFilter === "all";
+const itemFilter = useCallback(
+  (col: Student) => {
+    const allBranch   = workerTypeFilter === "all";
+    const allProgram  = programFilter === "all";
+    const allStart    = startDateFilter === "all";
+    const allStatus   = statusFilter === "all"; // keep if you still use status
 
-      return (
-        (allWorkerType || workerTypeFilter === col.branch_id.toString()) &&
-        (allStatus || statusFilter === col.status.toLowerCase()) &&
-        (allStartDate ||
-          new Date(
-            new Date().getTime() -
-              +(startDateFilter.match(/(\d+)(?=Days)/)?.[0] ?? 0) *
-                24 *
-                60 *
-                60 *
-                1000
-          ) <= new Date(col.admission_date))
-      );
-    },
-    [startDateFilter, statusFilter, workerTypeFilter]
+    // Branch match
+    const branchMatch =
+      allBranch || String(col.branch_id ?? "") === String(workerTypeFilter);
+    const programMatch =
+      allProgram ||
+      (Array.isArray(col.program_names) &&
+        col.program_names.some(
+          (n: string) => (n ?? "").toLowerCase() === programFilter.toLowerCase()
+        ));
+
+    // Status (optional)
+    const statusMatch =
+      allStatus ||
+      (col.status ?? "").toString().toLowerCase() === statusFilter.toLowerCase();
+
+    // Admission date
+    const dateMatch =
+      allStart ||
+      new Date(
+        new Date().getTime() -
+          +(startDateFilter.match(/(\d+)(?=Days)/)?.[0] ?? 0) *
+            24 * 60 * 60 * 1000
+      ) <= new Date(col.admission_date ?? 0);
+
+    return branchMatch && programMatch && statusMatch && dateMatch;
+  },
+  [workerTypeFilter, programFilter, statusFilter, startDateFilter]
+);
+
+
+
+useEffect(() => {
+  setProgramFilter("all");
+}, [workerTypeFilter]);
+const programOptionsForBranch = useMemo(() => {
+  const list = Array.isArray(allPrograms) ? allPrograms : [];
+  const filtered = workerTypeFilter === "all"
+    ? list
+    : list.filter(p => String(p.branch_id) === String(workerTypeFilter));
+
+  // dedupe by name and keep only valid names
+  return Array.from(new Set(filtered.map(p => (p.name ?? "").trim()).filter(Boolean)));
+}, [allPrograms, workerTypeFilter]);
+const safeProgramFilter = useMemo(
+  () => (programOptionsForBranch.includes(programFilter) ? programFilter : "all"),
+  [programOptionsForBranch, programFilter]
+);
+
+const filteredItems = useMemo(() => {
+  const safeStudents = Array.isArray(students) ? students : [];
+  let filteredUsers = [...safeStudents];
+
+  if (filterValue) {
+    const lowercased = filterValue.toLowerCase();
+
+filteredUsers = filteredUsers.filter((student) => {
+  const lowercased = (filterValue || "").toLowerCase();
+
+  const firstName = (student.first_name ?? "").toString().toLowerCase();
+  const email = (student.email ?? "").toString().toLowerCase();
+  const gender = (student.gender ?? "").toString().toLowerCase();
+  const phone = (student.phone ?? "").toString().toLowerCase();
+
+  return (
+    firstName.includes(lowercased) ||
+    email.includes(lowercased) ||
+    gender.includes(lowercased) ||
+    phone.includes(lowercased) ||
+    (student.programs || []).some((id: string) =>
+      ((getProgramNameById(id) ?? "").toString().toLowerCase()).includes(lowercased)
+    )
   );
+});
 
-  const filteredItems = useMemo(() => {
-    let filteredUsers = [...students];
+  }
 
-    if (filterValue) {
-      const lowercased = filterValue.toLowerCase();
+  return filteredUsers.filter(itemFilter);
+}, [filterValue, itemFilter, students]);
 
-      filteredUsers = filteredUsers.filter(
-        (student) =>
-          student.first_name?.toLowerCase().includes(lowercased) ||
-          student.email?.toLowerCase().includes(lowercased) ||
-          student.gender?.toLowerCase().includes(lowercased) ||
-          student.phone?.toLowerCase().includes(lowercased) ||
-          (student.programs || []).some((id: string) =>
-            getProgramNameById(id).toLowerCase().includes(lowercased)
-          )
-      );
-    }
-
-    filteredUsers = filteredUsers.filter(itemFilter); // this is your existing filter logic
-
-    return filteredUsers;
-  }, [filterValue, itemFilter, students]);
 
   const pages = Math.ceil(filteredItems.length / rowsPerPage) || 1;
 
@@ -268,7 +374,6 @@ export default function StudentTable() {
     (student: Student, columnKey: React.Key) => {
       const studentKey = columnKey as ColumnsKey;
       const cellValue = student[studentKey as keyof Student] as string;
-      console.log("cellvalue", cellValue);
       switch (studentKey) {
         case "gender":
           return (
@@ -298,7 +403,51 @@ export default function StudentTable() {
             </Chip>
           );
         }
+case "payment_status": {
+  const raw = (student.payment_status ?? "").toString().trim();
+  const normalized = raw.toLowerCase() as "paid" | "unpaid";
 
+  const chipColor =
+    normalized === "paid" ? "success" :
+    normalized === "unpaid" ? "danger" : "default";
+
+  return (
+    <Chip
+      size="sm"
+      variant="flat"
+      color={chipColor}
+      className="rounded-xl px-[6px] capitalize"   // ← remove bg-default-100 so color shows
+      startContent={statusPaid[normalized] ?? null}
+    >
+      {raw || "Unknown"}
+    </Chip>
+  );
+}
+
+        case "payment_end_date": {
+          return (
+            <Chip
+              className="rounded-xl bg-default-100 px-[6px] capitalize text-default-800"
+              size="sm"
+              variant="flat"
+            >
+              {student.
+payment_end_date
+}
+            </Chip>
+          );
+        }
+        case "payment_noted": {
+          return (
+            <Chip
+              className="rounded-xl bg-default-100 px-[6px] capitalize text-default-800"
+              size="sm"
+              variant="flat"
+            >
+              {student.payment_noted}
+            </Chip>
+          );
+        }
         case "branch":
           return (
             <Chip
@@ -358,13 +507,21 @@ export default function StudentTable() {
           );
 
         case "phone":
+             return <Chip
+              className="rounded-xl bg-default-100 px-[6px] capitalize text-default-800"
+              size="sm"
+              variant="flat"
+            >
+              {student.parent_contact || "Unknown"}
+            </Chip>
         case "parent_contact":
           return <CopyText>{cellValue.replace(/[-\s]/g, "")}</CopyText>;
 
         case "nationality":
-          const countryCode = nationalities.find(
-            (n) => n.name.toLowerCase() === cellValue.toLowerCase()
-          )?.code;
+          const cellValueSafe = (cellValue ?? "").toString().toLowerCase();
+  const countryCode = nationalities.find(
+    (n) => n.name.toLowerCase() === cellValueSafe
+  )?.code;
           return (
             <div className="flex items-center gap-2">
               <Image
@@ -387,15 +544,11 @@ export default function StudentTable() {
                 height={18}
                 width={18}
               />
+
               <EditStudent
                 student={student}
-                onUpdate={(updatedStudent) => {
-                  setStudents((prev) =>
-                    prev.map((s) =>
-                      s.id === updatedStudent.id ? updatedStudent : s
-                    )
-                  );
-                  fetchStudents();
+                onUpdate={() => {
+                  queryClient.invalidateQueries({ queryKey: ["students"] });
                 }}
                 trigger={
                   <EditLinearIcon
@@ -405,6 +558,7 @@ export default function StudentTable() {
                   />
                 }
               />
+
               <DeleteFilledIcon
                 {...getDeleteProps()}
                 onClick={() => handleDelete(student.id)}
@@ -475,6 +629,36 @@ export default function StudentTable() {
       setSelectedKeys(new Set(resultKeys));
     }
   });
+const getSelectedIds = useCallback((): string[] => {
+  if (filterSelectedKeys === "all") return filteredItems.map((s) => String(s.id));
+  return Array.from(filterSelectedKeys as Set<Key>).map(String);
+}, [filterSelectedKeys, filteredItems]);
+const selectedCount = useMemo(
+  () => (filterSelectedKeys === "all"
+    ? filteredItems.length
+    : (filterSelectedKeys as Set<Key>).size),
+  [filterSelectedKeys, filteredItems.length]
+);
+const markSelectedAs = useCallback(
+  async (status: "Paid" | "Unpaid") => {
+    const ids = getSelectedIds();
+    if (!ids.length) return;
+
+    const { error } = await supabase.rpc("update_payment_status_bulk", {
+      student_ids: ids,
+      new_status: status,
+    });
+
+    if (error) {
+      alert(`Update failed: ${error.message}`);
+      return;
+    }
+
+    await queryClient.invalidateQueries({ queryKey: ["students"] });
+    setSelectedKeys(new Set()); // clear selection
+  },
+  [getSelectedIds, queryClient, setSelectedKeys]
+);
 
   const topContent = useMemo(() => {
     return (
@@ -511,17 +695,16 @@ export default function StudentTable() {
                 <PopoverContent className="w-80">
                   <div className="flex w-full flex-col gap-6 px-2 py-4">
                     <RadioGroup
-                      label="Branch"
-                      value={workerTypeFilter}
-                      onValueChange={setWorkerTypeFilter}
-                    >
-                      <Radio value="all">All</Radio>
-                      {branches.map((branch) => (
-                        <Radio key={branch.id} value={branch.id}>
-                          {branch.name}
-                        </Radio>
-                      ))}
-                    </RadioGroup>
+  label="Branch"
+  value={workerTypeFilter}
+  onValueChange={setWorkerTypeFilter}
+>
+  <Radio value="all">All</Radio>
+  <Radio value="873bea75-e6c4-4c32-b625-d11dd4221a57">Funmall TK</Radio>
+  <Radio value="659308e2-436f-43d7-a258-5a30adeb55dc">PengHout</Radio>
+  <Radio value="67610209-6fd3-46a4-98bb-199d7a7faf27">OCIC</Radio>
+</RadioGroup>
+
 
                     <RadioGroup
                       label="StatusStudent"
@@ -533,6 +716,18 @@ export default function StudentTable() {
                       <Radio value="inactive">Inactive</Radio>
                       <Radio value="hold">Hold</Radio>
                     </RadioGroup>
+<RadioGroup
+  key={workerTypeFilter}          // force remount when Branch changes
+  label="Program"
+  value={safeProgramFilter}       // use safe, controlled value
+  onValueChange={(val) => setProgramFilter(String(val))}
+>
+  <Radio value="all">All</Radio>
+  {programOptionsForBranch.map((name) => (
+    <Radio key={name} value={name}>{name}</Radio>
+  ))}
+</RadioGroup>
+
 
                     <RadioGroup
                       label="Admission Date"
@@ -631,31 +826,52 @@ export default function StudentTable() {
               : `${filterSelectedKeys.size} Selected`}
           </div>
 
-          {(filterSelectedKeys === "all" || filterSelectedKeys.size > 0) && (
-            <Dropdown>
-              <DropdownTrigger>
-                <Button
-                  className="bg-default-100 text-default-800"
-                  endContent={
-                    <Icon
-                      className="text-default-400"
-                      icon="solar:alt-arrow-down-linear"
-                    />
-                  }
-                  size="sm"
-                  variant="flat"
-                >
-                  Selected Actions
-                </Button>
-              </DropdownTrigger>
-              <DropdownMenu aria-label="Selected Actions">
-                <DropdownItem key="send-email">Send email</DropdownItem>
-                <DropdownItem key="pay-invoices">Pay invoices</DropdownItem>
-                <DropdownItem key="bulk-edit">Bulk edit</DropdownItem>
-                <DropdownItem key="end-contract">End contract</DropdownItem>
-              </DropdownMenu>
-            </Dropdown>
-          )}
+{selectedCount > 0 && (
+  <Dropdown placement="bottom-start">
+    <DropdownTrigger>
+      <Button
+        className="bg-default-100 text-default-800"
+        endContent={<Icon className="text-default-400" icon="solar:alt-arrow-down-linear" />}
+        size="sm"
+        variant="flat"
+      >
+        Selected Actions
+      </Button>
+    </DropdownTrigger>
+
+    <DropdownMenu
+      aria-label="Selected Actions"
+      onAction={(key) => {
+        if (key === "mark-paid") markSelectedAs("Paid");
+        if (key === "mark-unpaid") markSelectedAs("Unpaid");
+        if (key === "clear-selection") setSelectedKeys(new Set());
+      }}
+    >
+      <DropdownItem key="selected-indicator" isReadOnly className="cursor-default text-default-400">
+        {selectedCount} selected
+      </DropdownItem>
+
+      <DropdownItem
+        key="mark-paid"
+        startContent={<Icon icon="solar:check-circle-linear" width={16} className="text-success" />}
+      >
+        Mark as Paid
+      </DropdownItem>
+
+      <DropdownItem
+        key="mark-unpaid"
+        startContent={<Icon icon="solar:close-circle-linear" width={16} className="text-danger" />}
+      >
+        Mark as Unpaid
+      </DropdownItem>
+
+      <DropdownItem key="clear-selection" className="text-default-500">
+        Clear selection
+      </DropdownItem>
+    </DropdownMenu>
+  </Dropdown>
+)}
+
         </div>
       </div>
     );
@@ -668,6 +884,8 @@ export default function StudentTable() {
     statusFilter,
     workerTypeFilter,
     startDateFilter,
+    programFilter,
+  programOptionsForBranch,
     setWorkerTypeFilter,
     setStatusFilter,
     setStartDateFilter,
@@ -675,7 +893,9 @@ export default function StudentTable() {
     setVisibleColumns,
   ]);
 
-  const studentLength = useMemo(() => students.length, [students]);
+// const studentLength = useMemo(() => (Array.isArray(students) ? students.length : 0), [students]);
+
+const studentLength = filteredItems.length;
 
   const topBar = useMemo(() => {
     return (
@@ -690,7 +910,8 @@ export default function StudentTable() {
             {studentLength}
           </Chip>
         </div>
-        <AddStudent onUpdate={fetchStudents} />
+     <AddStudent onUpdate={() => queryClient.invalidateQueries(["students"])} />
+
       </div>
     );
   }, [studentLength]);

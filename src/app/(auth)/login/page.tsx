@@ -32,10 +32,8 @@ const handleLogin = async (e: React.FormEvent) => {
 
   const { email, password } = formData;
 
-  const { data, error } = await supabase.auth.signInWithPassword({
-    email,
-    password,
-  });
+  // Login with Supabase (cookie session auto-handled)
+  const { data, error } = await supabase.auth.signInWithPassword({ email, password });
 
   console.log("Login result:", { data, error });
 
@@ -46,38 +44,34 @@ const handleLogin = async (e: React.FormEvent) => {
   }
 
   if (!data?.session) {
-    setErrorMessage("No session returned. Check Supabase setup.");
+    setErrorMessage("No session returned. Please check Supabase settings.");
     setIsSubmitting(false);
     return;
   }
 
-  const userId = data.session.user.id;
-  const { data: profileData, error: profileError } = await supabase.rpc("get_user_by_id", {
-    _id: userId,
-  });
+  try {
+    const userId = data.session.user.id;
 
-  if (profileError) {
-    console.error("Error fetching profile:", profileError);
-    setErrorMessage("Failed to fetch user profile.");
+    // Optional: fetch additional profile info (cleaner error handling)
+    const { data: profileData, error: profileError } = await supabase.rpc("get_user_by_id", {
+      _id: userId,
+    });
+
+    if (profileError) {
+      console.warn("Profile fetch failed:", profileError.message);
+    } else {
+      const profile = Array.isArray(profileData) ? profileData[0] : profileData;
+      console.log("User profile:", profile);
+      // You can set profile in a context or global state here if needed
+    }
+
+    router.push("/");
+  } catch (err) {
+    setErrorMessage("Unexpected error during login.");
+    console.error("Login error:", err);
+  } finally {
     setIsSubmitting(false);
-    return;
   }
-  const profile = Array.isArray(profileData) ? profileData[0] : profileData;
-
-  if (!profile || !profile.name) {
-    console.warn("Warning: User profile missing name field.");
-  }
-  localStorage.setItem("user", JSON.stringify(profile));
-  localStorage.setItem("userName", profile.name || "");
-  localStorage.setItem("profileUrl", profile.profile_url || "");
-  localStorage.setItem("authToken", data.session.access_token);
-  localStorage.setItem("refreshToken", data.session.refresh_token);
-  localStorage.setItem("userId", userId);
-
-  console.log("Redirecting to /...");
-  router.push("/");
-
-  setIsSubmitting(false);
 };
 
 
