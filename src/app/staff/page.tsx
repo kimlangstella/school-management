@@ -13,6 +13,7 @@ import {
   Avatar,
 } from '@heroui/react';
 import { PencilSquareIcon, TrashIcon } from '@heroicons/react/24/outline';
+import Image from "next/image";
 
 type User = {
   id: string;
@@ -29,7 +30,7 @@ export default function UserManagement() {
   const [message, setMessage] = useState('');
   const [profileImage, setProfileImage] = useState<File | null>(null);
   const [users, setUsers] = useState<User[]>([]);
-  const [error, setError] = useState<string | null>(null);
+  const [, setError] = useState<string | null>(null);
   const [isModalOpen, setModalOpen] = useState(false);
   const [modalMode, setModalMode] = useState<'add' | 'edit'>('add');
   const [selectedUser, setSelectedUser] = useState<User | null>(null);
@@ -216,7 +217,7 @@ const handleDelete = async (id: string) => {
   {modalMode === 'edit' && selectedUser?.profile_url && (
     <div className="flex items-center gap-2">
       <span className="text-sm text-gray-700">Current Image:</span>
-      <img
+      <Image
         src={selectedUser.profile_url}
         alt="Profile"
         className="w-10 h-10 rounded-full object-cover border"

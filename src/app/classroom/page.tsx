@@ -1,7 +1,6 @@
 "use client";
 
 import React from "react";
-import CardAaa from "@/components/card/card-aaa";
 import AddClassroomModal from "@/components/modal/add_classroom";
 import ClassroomCard from "@/components/card/classroom-card";
 import AddEnrollment from "@/components/modal/add-enrollment";

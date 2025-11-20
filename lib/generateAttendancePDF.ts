@@ -1,5 +1,4 @@
 'use client';
-import { createClient } from '@supabase/supabase-js';
 
 export async function generateAttendancePDF(records: any[], branches: any[]) {
   const pdfMake = (await import('pdfmake/build/pdfmake')).default;

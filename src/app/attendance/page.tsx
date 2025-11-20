@@ -2,9 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import AttendanceTable from '@/components/table/attendance-table';
-import AddAttendanceModal from '@/components/modal/add-attendance';
 import { supabase } from '../../../lib/supabaseClient';
-import { Icon } from '@iconify/react';
 import {
   Dropdown,
   DropdownTrigger,
@@ -25,7 +23,6 @@ type Program = {
 };
 
 export default function AttendancePage() {
-  const [isOpen, setIsOpen] = useState(false);
 
   const [branches, setBranches] = useState<Branch[]>([]);
   const [programs, setPrograms] = useState<Program[]>([]);

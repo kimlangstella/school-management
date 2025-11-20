@@ -4,7 +4,6 @@ import React, { useState } from "react";
 import { useRouter } from "next/navigation";
 import { Button, Input, Link, Form, Checkbox } from "@heroui/react";
 import { Icon } from "@iconify/react";
-import { AcmeIcon } from "@/components/acme";
 import { supabase } from "../../../../lib/supabaseClient";
 import Image from "next/image";
 export default function LoginPage() {

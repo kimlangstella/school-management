@@ -41,19 +41,19 @@ export default function ProgramPage() {
     fetchBranches();
   }, []);
 
-const handleDelete = async (id: string) => {
-  const confirmDelete = window.confirm('Delete this program?');
-  if (!confirmDelete) return;
-
-  const { error } = await supabase.rpc('delete_program', { _id: id });
-
-  if (error) {
-    console.error('Failed to delete program:', error.message);
-    alert(`Delete failed: ${error.message}`);
-  } else {
-    fetchPrograms();
-  }
-};
+// const handleDelete = async (id: string) => {
+//   const confirmDelete = window.confirm('Delete this program?');
+//   if (!confirmDelete) return;
+//
+//   const { error } = await supabase.rpc('delete_program', { _id: id });
+//
+//   if (error) {
+//     console.error('Failed to delete program:', error.message);
+//     alert(`Delete failed: ${error.message}`);
+//   } else {
+//     fetchPrograms();
+//   }
+// };
 
   // ✅ Filter programs based on selected branch
   const filteredPrograms = selectedBranch

@@ -2,8 +2,7 @@
 
 import React, { Suspense } from "react";
 import BranchCard from "@/components/card/branch-card";
-import {Button, Chip} from "@heroui/react";
-import {Icon} from "@iconify/react";
+import {Chip} from "@heroui/react";
 import AddBranch from "@/components/modal/add-branch";
 
 export default function TrialPage() {

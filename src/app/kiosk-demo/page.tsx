@@ -1,137 +1,146 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, useCallback } from "react";
 import { BrowserMultiFormatReader, IScannerControls } from "@zxing/browser";
 
 type DemoStudent = { code: string; first_name: string; last_name: string };
 type Status = "present" | "late" | "absent" | "unmarked";
 
 const DEMO_STUDENTS: DemoStudent[] = [
-  { code: "AAA11111", first_name: "CHHAN", last_name: "UDOMSAKADA" },
-  { code: "BBB22222", first_name: "CHHAN", last_name: "UDOMVATANA" },
-  { code: "CCC33333", first_name: "PHAY", last_name: "NA YUTH" },
-  { code: "DDD44444", first_name: "PUTH", last_name: "PICH MOROKOT" },
-  { code: "EEE55555", first_name: "LIM", last_name: "HONGKEAT" },
-  { code: "FFF66666", first_name: "CHEA", last_name: "KIM ANN" },
+    { code: "AAA11111", first_name: "CHHAN", last_name: "UDOMSAKADA" },
+    { code: "BBB22222", first_name: "CHHAN", last_name: "UDOMVATANA" },
+    { code: "CCC33333", first_name: "PHAY", last_name: "NA YUTH" },
+    { code: "DDD44444", first_name: "PUTH", last_name: "PICH MOROKOT" },
+    { code: "EEE55555", first_name: "LIM", last_name: "HONGKEAT" },
+    { code: "FFF66666", first_name: "CHEA", last_name: "KIM ANN" },
 ];
 
 const SESSIONS = Array.from({ length: 11 }, (_, i) => i + 1);
 
 export default function KioskDemo() {
-  const videoRef = useRef<HTMLVideoElement | null>(null);
+    const videoRef = useRef<HTMLVideoElement | null>(null);
 
-  // ZXing objects held in refs
-  const readerRef = useRef<BrowserMultiFormatReader | null>(null);
-  const controlsRef = useRef<IScannerControls | null>(null);
+    // ZXing objects held in refs
+    const readerRef = useRef<BrowserMultiFormatReader | null>(null);
+    const controlsRef = useRef<IScannerControls | null>(null);
 
-  const [cameraOn, setCameraOn] = useState(false);
+    // FIX: Use useRef for debounce instead of 'window' to avoid 'any' errors
+    const lastScanRef = useRef<{ code: string; ts: number }>({ code: "", ts: 0 });
 
-  const [classroom, setClassroom] = useState("Robotics_PH");
-  const [sessionNo, setSessionNo] = useState<number>(1);
+    const [cameraOn, setCameraOn] = useState(false);
+    const [classroom, setClassroom] = useState("Robotics_PH");
+    const [sessionNo, setSessionNo] = useState<number>(1);
+    const [sessionDate, setSessionDate] = useState<string>("");
 
-  const [sessionDate, setSessionDate] = useState<string>("");
+    const [statusByStudent, setStatusByStudent] = useState<Record<string, Status>>({});
+    const [log, setLog] = useState<string[]>([]);
+    const [manualCode, setManualCode] = useState("");
 
-  const [statusByStudent, setStatusByStudent] = useState<Record<string, Status>>({});
-  const [log, setLog] = useState<string[]>([]);
-  const [manualCode, setManualCode] = useState("");
+    // init statuses
+    useEffect(() => {
+        const init: Record<string, Status> = {};
+        DEMO_STUDENTS.forEach((s) => (init[s.code] = "unmarked"));
+        setStatusByStudent(init);
+    }, []);
 
-  // init statuses
-  useEffect(() => {
-    const init: Record<string, Status> = {};
-    DEMO_STUDENTS.forEach((s) => (init[s.code] = "unmarked"));
-    setStatusByStudent(init);
-  }, []);
+    // reset on session change
+    useEffect(() => {
+        const reset: Record<string, Status> = {};
+        DEMO_STUDENTS.forEach((s) => (reset[s.code] = "unmarked"));
+        setStatusByStudent(reset);
+        setLog([]);
+    }, [sessionNo]);
 
-  // reset on session change
-  useEffect(() => {
-    const reset: Record<string, Status> = {};
-    DEMO_STUDENTS.forEach((s) => (reset[s.code] = "unmarked"));
-    setStatusByStudent(reset);
-    setLog([]);
-  }, [sessionNo]);
-
-  // camera start/stop using controls.stop()
-  useEffect(() => {
-    const stopEverything = () => {
-      try {
-        controlsRef.current?.stop();
-        controlsRef.current = null;
-      } catch {}
-      const stream = videoRef.current?.srcObject as MediaStream | null;
-      stream?.getTracks().forEach((t) => t.stop());
-      if (videoRef.current) videoRef.current.srcObject = null;
-    };
-
-    if (!cameraOn) {
-      stopEverything();
-      return;
+    // Helper function needs to be available to handleScan
+    function format(iso: string) {
+        return new Date(iso + "T00:00:00").toLocaleDateString("en-GB", { day: "2-digit", month: "short" });
     }
 
-    readerRef.current = new BrowserMultiFormatReader();
+    // FIX: Wrapped in useCallback for stable dependency in useEffect
+    const handleScan = useCallback((raw: string) => {
+        const code = raw.startsWith("S:") ? raw.slice(2) : raw;
 
-    (async () => {
-      try {
-        controlsRef.current = await readerRef.current!.decodeFromVideoDevice(
-          undefined,               // auto select camera
-          videoRef.current!,       // <video> target
-          (result, err) => {
-            if (!result) return;
-            const raw = result.getText().trim();
-            handleScan(raw);
-          }
-        );
-      } catch (e) {
-        console.error(e);
-        setLog((l) => [`Camera error: ${String((e as any)?.message || e)}`, ...l]);
-        setCameraOn(false);
-        stopEverything();
-      }
-    })();
+        // FIX: Use ref for debounce logic
+        const now = Date.now();
+        if (lastScanRef.current.code === code && now - lastScanRef.current.ts < 2000) {
+            return;
+        }
+        lastScanRef.current = { code, ts: now };
 
-    // cleanup on unmount / toggle off
-    return () => stopEverything();
-  }, [cameraOn]);
+        const student = DEMO_STUDENTS.find((s) => s.code === code);
+        if (!student) {
+            setLog((l) => [`Unknown code: ${code}`, ...l]);
+            beep(false);
+            return;
+        }
 
-  function handleScan(raw: string) {
-    const code = raw.startsWith("S:") ? raw.slice(2) : raw;
+        setStatusByStudent((m) => ({ ...m, [code]: "present" }));
+        setLog((l) => [
+            `✓ ${student.first_name} ${student.last_name} → Present (S${sessionNo}${sessionDate ? ", " + format(sessionDate) : ""})`,
+            ...l,
+        ]);
+        beep(true);
+    }, [sessionNo, sessionDate]);
 
-    // debounce 2s
-    if ((window as any).__lastCode === code && Date.now() - ((window as any).__lastTs || 0) < 2000) return;
-    (window as any).__lastCode = code; (window as any).__lastTs = Date.now();
+    // camera start/stop using controls.stop()
+    useEffect(() => {
+        const stopEverything = () => {
+            try {
+                controlsRef.current?.stop();
+                controlsRef.current = null;
+            } catch {}
+            const stream = videoRef.current?.srcObject as MediaStream | null;
+            stream?.getTracks().forEach((t) => t.stop());
+            if (videoRef.current) videoRef.current.srcObject = null;
+        };
 
-    const student = DEMO_STUDENTS.find((s) => s.code === code);
-    if (!student) {
-      setLog((l) => [`Unknown code: ${code}`, ...l]);
-      beep(false);
-      return;
+        if (!cameraOn) {
+            stopEverything();
+            return;
+        }
+
+        readerRef.current = new BrowserMultiFormatReader();
+
+        (async () => {
+            try {
+                controlsRef.current = await readerRef.current!.decodeFromVideoDevice(
+                    undefined,               // auto select camera
+                    videoRef.current!,       // <video> target
+                    // FIX: Removed unused 'err' parameter
+                    (result) => {
+                        if (!result) return;
+                        const raw = result.getText().trim();
+                        handleScan(raw);
+                    }
+                );
+            } catch (e) {
+                console.error(e);
+                // FIX: Safer error handling than 'as any'
+                const msg = e instanceof Error ? e.message : String(e);
+                setLog((l) => [`Camera error: ${msg}`, ...l]);
+                setCameraOn(false);
+                stopEverything();
+            }
+        })();
+
+        // cleanup on unmount / toggle off
+        return () => stopEverything();
+    }, [cameraOn, handleScan]); // FIX: Added handleScan to dependencies
+
+    function setStatus(code: string, status: Exclude<Status, "unmarked">) {
+        const student = DEMO_STUDENTS.find((s) => s.code === code)!;
+        setStatusByStudent((m) => ({ ...m, [code]: status }));
+        setLog((l) => [`• ${student.first_name} ${student.last_name} → ${status}`, ...l]);
+        beep(status !== "absent");
     }
 
-    setStatusByStudent((m) => ({ ...m, [code]: "present" }));
-    setLog((l) => [
-      `✓ ${student.first_name} ${student.last_name} → Present (S${sessionNo}${sessionDate ? ", " + format(sessionDate) : ""})`,
-      ...l,
-    ]);
-    beep(true);
-  }
-
-  function setStatus(code: string, status: Exclude<Status, "unmarked">) {
-    const student = DEMO_STUDENTS.find((s) => s.code === code)!;
-    setStatusByStudent((m) => ({ ...m, [code]: status }));
-    setLog((l) => [`• ${student.first_name} ${student.last_name} → ${status}`, ...l]);
-    beep(status !== "absent");
-  }
-
-  function format(iso: string) {
-    return new Date(iso + "T00:00:00").toLocaleDateString("en-GB", { day: "2-digit", month: "short" });
-  }
-
-  function resetDemo() {
-    const init: Record<string, Status> = {};
-    DEMO_STUDENTS.forEach((s) => (init[s.code] = "unmarked"));
-    setStatusByStudent(init);
-    setLog([]);
-    setSessionDate("");
-  }
+    function resetDemo() {
+        const init: Record<string, Status> = {};
+        DEMO_STUDENTS.forEach((s) => (init[s.code] = "unmarked"));
+        setStatusByStudent(init);
+        setLog([]);
+        setSessionDate("");
+    }
 
   return (
     <div className="p-6 max-w-5xl mx-auto">

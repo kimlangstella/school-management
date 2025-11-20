@@ -23,7 +23,7 @@ type Program = { id: string; name: string }
 
 export default function ExamPage() {
   const [exams, setExams] = useState<Exam[]>([])
-  const [branches, setBranches] = useState<Branch[]>([])
+  const [, setBranches] = useState<Branch[]>([])
   const [programs, setPrograms] = useState<Program[]>([])
   const [loading, setLoading] = useState(true)
 const [editExam, setEditExam] = useState<Exam | null>(null);
@@ -49,7 +49,7 @@ useEffect(() => {
 }, [])
 
 const getProgramNameById = (id: string): string => {
-  const program = programs.find((p: any) => p.id === id)
+  const program = programs.find((p) => p.id === id)
   return program ? program.name : 'Unknown Program'
 }
 

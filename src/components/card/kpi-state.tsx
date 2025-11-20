@@ -20,9 +20,8 @@ export default function KpiState() {
   const [selectedProgram, setSelectedProgram] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
 
-  useEffect(() => { void fetchAllData(); }, []);
-
   useEffect(() => {
+      void fetchAllData();
     if (!selectedProgram || programs.length === 0) {
       setStudentLength(0);
       return;
