@@ -105,7 +105,7 @@ const fetchStudents = async () => {
 
   for (;;) {
     const { data, error } = await supabase.rpc(
-      "get_all_students_with_programs_offset", // <-- the paginated RPC
+      "get_all_student_with_programs_offset", // <-- the paginated RPC
       {
         p_limit: PAGE_SIZE,
         p_offset: offset,
