@@ -5,6 +5,7 @@ import { createClient } from '../../../lib/supabaseClient';
 import CardAaa from '@/components/card/card-aaa';
 import AddProgram from '@/components/modal/add-program';
 import EditProgramModal from '@/components/modal/edit-program';
+import { Tabs, Tab } from '@heroui/react';
 
 type Program = {
   id: string;
@@ -73,26 +74,43 @@ export default function ProgramPage() {
         <AddProgram onSuccess={fetchPrograms} />
       </div>
 
-      <div className="flex flex-wrap items-center gap-2 sm:gap-3 px-2 sm:px-4 lg:px-6 mb-4 sm:mb-6 overflow-x-auto">
-        <button
-          className={`px-3 sm:px-4 py-2 rounded-md border text-xs sm:text-sm whitespace-nowrap ${
-            selectedBranch === null ? 'bg-primary text-white' : 'bg-default-100'
-          }`}
-          onClick={() => setSelectedBranch(null)}
+      <div className="px-2 sm:px-4 lg:px-6 mb-4 sm:mb-6">
+        <Tabs
+          selectedKey={selectedBranch ?? "all"}
+          onSelectionChange={(key) => setSelectedBranch(key === "all" ? null : key as string)}
+          variant="underlined"
+          classNames={{
+            base: "w-full",
+            tabList: "gap-2 sm:gap-4 w-full relative rounded-none p-0 border-b border-divider",
+            cursor: "w-full bg-primary",
+            tab: "max-w-fit px-3 sm:px-4 h-10 sm:h-12",
+            tabContent: "group-data-[selected=true]:text-primary text-default-500",
+          }}
         >
-          All Branches
-        </button>
-        {branches.map(branch => (
-          <button
-            key={branch.id}
-            className={`px-3 sm:px-4 py-2 rounded-md border text-xs sm:text-sm whitespace-nowrap ${
-              selectedBranch === branch.id ? 'bg-primary text-white' : 'bg-default-100'
-            }`}
-            onClick={() => setSelectedBranch(branch.id)}
-          >
-            {branch.name}
-          </button>
-        ))}
+          <Tab
+            key="all"
+            title={
+              <div className="flex items-center gap-2">
+                <span>All</span>
+                <span className="text-xs text-default-400">({programs.length})</span>
+              </div>
+            }
+          />
+          {branches.map(branch => {
+            const branchProgramCount = programs.filter(p => p.branch_id === branch.id).length;
+            return (
+              <Tab
+                key={branch.id}
+                title={
+                  <div className="flex items-center gap-2">
+                    <span>{branch.name}</span>
+                    <span className="text-xs text-default-400">({branchProgramCount})</span>
+                  </div>
+                }
+              />
+            );
+          })}
+        </Tabs>
       </div>
 
       <div className="px-2 sm:px-4 lg:px-6 pb-6 sm:pb-10">
