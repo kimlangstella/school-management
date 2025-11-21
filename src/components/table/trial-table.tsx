@@ -396,35 +396,73 @@ export default function StudentTable() {
                     return <StatusTrialProp status={cellValue as StatusTrial} />;
                 case "actions":
                     return (
-                        <div className="flex items-center justify-start gap-2">
-                            <EyeFilledIcon
-                                {...getEyesProps()}
+                        <div className="flex items-center justify-start gap-2 sm:gap-2">
+                            <div 
+                                className="p-2 -m-2 touch-manipulation"
                                 onClick={() => console.log("Viewing", trial)}
-                                className="cursor-pointer text-default-400"
-                                height={18}
-                                width={18}
-                            />
+                                onTouchStart={(e) => {
+                                    e.stopPropagation();
+                                    console.log("Viewing", trial);
+                                }}
+                                role="button"
+                                tabIndex={0}
+                            >
+                                <EyeFilledIcon
+                                    {...getEyesProps()}
+                                    className="cursor-pointer text-default-400 active:scale-95"
+                                    height={20}
+                                    width={20}
+                                />
+                            </div>
 
-                            <Icon
-                                icon="solar:pen-bold"
+                            <div 
+                                className="p-2 -m-2 touch-manipulation"
                                 onClick={() => {
                                     setEditingTrial(trial);
                                     setEditModalOpen(true);
                                 }}
-                                className="cursor-pointer text-default-400"
-                                height={18}
-                                width={18}
-                            />
+                                onTouchStart={(e) => {
+                                    e.stopPropagation();
+                                    setEditingTrial(trial);
+                                    setEditModalOpen(true);
+                                }}
+                                role="button"
+                                tabIndex={0}
+                                onKeyDown={(e) => {
+                                    if (e.key === 'Enter' || e.key === ' ') {
+                                        e.preventDefault();
+                                        setEditingTrial(trial);
+                                        setEditModalOpen(true);
+                                    }
+                                }}
+                            >
+                                <Icon
+                                    icon="solar:pen-bold"
+                                    className="cursor-pointer text-default-400 active:scale-95"
+                                    height={20}
+                                    width={20}
+                                />
+                            </div>
 
-                            <DeleteFilledIcon
+                            <div 
+                                className="p-2 -m-2 touch-manipulation"
                                 onClick={() => {
                                     console.log("Delete clicked:", trial.id);
                                     handleDelete(trial.id);
                                 }}
-                                className="cursor-pointer text-default-400"
-                                height={18}
-                                width={18}
-                            />
+                                onTouchStart={(e) => {
+                                    e.stopPropagation();
+                                    handleDelete(trial.id);
+                                }}
+                                role="button"
+                                tabIndex={0}
+                            >
+                                <DeleteFilledIcon
+                                    className="cursor-pointer text-default-400 active:scale-95"
+                                    height={20}
+                                    width={20}
+                                />
+                            </div>
                         </div>
                     );
 
@@ -505,7 +543,7 @@ export default function StudentTable() {
                             onValueChange={onSearchChange}
                         />
                         <div>
-                            <Popover placement="bottom">
+                            <Popover placement="bottom-start" offset={10}>
                                 <PopoverTrigger>
                                     <Button
                                         className="bg-default-100 text-default-800"
@@ -521,8 +559,8 @@ export default function StudentTable() {
                                         Filter
                                     </Button>
                                 </PopoverTrigger>
-                                <PopoverContent className="w-80">
-                                    <div className="flex w-full flex-col gap-6 px-2 py-4">
+                                <PopoverContent className="w-80 dark text-foreground bg-background border-default-200">
+                                    <div className="flex w-full flex-col gap-6 px-2 py-4 max-h-[70vh] overflow-y-auto">
                                         <RadioGroup
                                             label="Branch"
                                             value={workerTypeFilter}
@@ -627,9 +665,19 @@ export default function StudentTable() {
                                     selectedKeys={visibleColumns}
                                     selectionMode="multiple"
                                     onSelectionChange={setVisibleColumns}
+                                    classNames={{
+                                        base: "dark text-foreground bg-background max-h-[300px] overflow-y-auto",
+                                    }}
                                 >
                                     {(item) => (
-                                        <DropdownItem key={item.uid}>{item.name}</DropdownItem>
+                                        <DropdownItem 
+                                            key={item.uid}
+                                            classNames={{
+                                                base: "text-foreground data-[hover=true]:bg-default-100",
+                                            }}
+                                        >
+                                            {item.name}
+                                        </DropdownItem>
                                     )}
                                 </DropdownMenu>
                             </Dropdown>

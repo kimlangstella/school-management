@@ -220,8 +220,12 @@ export default function StudentPaymentsTable() {
                                     <TableCell>{student.latestDue}</TableCell>
                                     <TableCell>
                                         <button
-                                            className="bg-blue-500 hover:bg-blue-600 text-white px-3 py-1 rounded"
+                                            className="bg-blue-500 hover:bg-blue-600 active:bg-blue-700 text-white px-3 py-2 sm:py-1 rounded touch-manipulation min-h-[44px] sm:min-h-0 text-sm"
                                             onClick={() => console.log("Edit clicked for", student)}
+                                            onTouchStart={(e) => {
+                                                e.stopPropagation();
+                                                console.log("Edit clicked for", student);
+                                            }}
                                         >
                                             Edit
                                         </button>

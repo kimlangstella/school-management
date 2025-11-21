@@ -89,7 +89,8 @@ export default function StudentTable() {
     const [programFilter, setProgramFilter] = React.useState("all");
 
     const [workerTypeFilter, setWorkerTypeFilter] = React.useState("all");
-    const [statusFilter, setStatusFilter] = React.useState("all");
+    const [statusFilter, setStatusFilter] = React.useState("active");
+    const [paymentStatusFilter, setPaymentStatusFilter] = React.useState("all");
     const [startDateFilter, setStartDateFilter] = React.useState("all");
 
     const PAGE_SIZE = 500;
@@ -205,6 +206,7 @@ export default function StudentTable() {
             const allProgram  = programFilter === "all";
             const allStart    = startDateFilter === "all";
             const allStatus   = statusFilter === "all";
+            const allPayment  = paymentStatusFilter === "all";
 
             // Branch match
             const branchMatch =
@@ -221,6 +223,15 @@ export default function StudentTable() {
                 allStatus ||
                 (col.status ?? "").toString().toLowerCase() === statusFilter.toLowerCase();
 
+            // Payment Status
+            const paymentMatch =
+                allPayment ||
+                (() => {
+                    const paymentStatus = (col.payment_status ?? "").toString().toLowerCase();
+                    const normalizedPayment = paymentStatus === "paid" ? "paid" : "unpaid";
+                    return normalizedPayment === paymentStatusFilter.toLowerCase();
+                })();
+
             // Admission date
             const dateMatch =
                 allStart ||
@@ -230,24 +241,90 @@ export default function StudentTable() {
                     24 * 60 * 60 * 1000
                 ) <= new Date(col.admission_date ?? 0);
 
-            return branchMatch && programMatch && statusMatch && dateMatch;
+            return branchMatch && programMatch && statusMatch && paymentMatch && dateMatch;
         },
-        [workerTypeFilter, programFilter, statusFilter, startDateFilter]
+        [workerTypeFilter, programFilter, statusFilter, paymentStatusFilter, startDateFilter]
     );
 
+    // Reset branch when status changes
+    useEffect(() => {
+        setWorkerTypeFilter("all");
+    }, [statusFilter]);
+
+    // Reset program and payment status when status or branch changes
     useEffect(() => {
         setProgramFilter("all");
-    }, [workerTypeFilter]);
+        setPaymentStatusFilter("all");
+    }, [statusFilter, workerTypeFilter]);
 
+    // Get branches filtered by status
+    const branchOptionsForStatus = useMemo(() => {
+        const safeStudents = Array.isArray(students) ? students : [];
+        const statusFiltered = statusFilter === "all"
+            ? safeStudents
+            : safeStudents.filter(s => (s.status ?? "").toString().toLowerCase() === statusFilter.toLowerCase());
+        
+        // Get unique branch IDs from filtered students
+        const branchIds = new Set(
+            statusFiltered
+                .map(s => s.branch_id)
+                .filter(Boolean)
+                .map(String)
+        );
+        
+        // Return all branches if status is "all", otherwise only branches with students of that status
+        if (statusFilter === "all") {
+            return [
+                { id: "all", name: "All" },
+                { id: "873bea75-e6c4-4c32-b625-d11dd4221a57", name: "Funmall TK" },
+                { id: "659308e2-436f-43d7-a258-5a30adeb55dc", name: "PengHout" },
+                { id: "67610209-6fd3-46a4-98bb-199d7a7faf27", name: "OCIC" },
+            ];
+        }
+        
+        return [
+            { id: "all", name: "All" },
+            ...(branchIds.has("873bea75-e6c4-4c32-b625-d11dd4221a57") ? [{ id: "873bea75-e6c4-4c32-b625-d11dd4221a57", name: "Funmall TK" }] : []),
+            ...(branchIds.has("659308e2-436f-43d7-a258-5a30adeb55dc") ? [{ id: "659308e2-436f-43d7-a258-5a30adeb55dc", name: "PengHout" }] : []),
+            ...(branchIds.has("67610209-6fd3-46a4-98bb-199d7a7faf27") ? [{ id: "67610209-6fd3-46a4-98bb-199d7a7faf27", name: "OCIC" }] : []),
+        ];
+    }, [students, statusFilter]);
+
+    // Get programs filtered by status and branch
     const programOptionsForBranch = useMemo(() => {
-        const list = Array.isArray(allPrograms) ? allPrograms : [];
-        const filtered = workerTypeFilter === "all"
-            ? list
-            : list.filter(p => String(p.branch_id) === String(workerTypeFilter));
-
-        // dedupe by name and keep only valid names
-        return Array.from(new Set(filtered.map(p => (p.name ?? "").trim()).filter(Boolean)));
-    }, [allPrograms, workerTypeFilter]);
+        const safeStudents = Array.isArray(students) ? students : [];
+        const allProgramsList = Array.isArray(allPrograms) ? allPrograms : [];
+        
+        // First filter by status
+        const statusFiltered = statusFilter === "all"
+            ? safeStudents
+            : safeStudents.filter(s => (s.status ?? "").toString().toLowerCase() === statusFilter.toLowerCase());
+        
+        // Then filter by branch
+        const branchFiltered = workerTypeFilter === "all"
+            ? statusFiltered
+            : statusFiltered.filter(s => String(s.branch_id ?? "") === String(workerTypeFilter));
+        
+        // Get unique program names from filtered students
+        const programNames = new Set<string>();
+        branchFiltered.forEach(s => {
+            if (Array.isArray(s.program_names)) {
+                s.program_names.forEach(name => {
+                    if (name && name.trim()) {
+                        programNames.add(name.trim());
+                    }
+                });
+            }
+        });
+        
+        // If no filters, return all programs
+        if (statusFilter === "all" && workerTypeFilter === "all") {
+            return Array.from(new Set(allProgramsList.map(p => (p.name ?? "").trim()).filter(Boolean)));
+        }
+        
+        // Return only programs that exist in the filtered students
+        return Array.from(programNames);
+    }, [allPrograms, statusFilter, workerTypeFilter, students]);
 
     const safeProgramFilter = useMemo(
         () => (programOptionsForBranch.includes(programFilter) ? programFilter : "all"),
@@ -258,6 +335,73 @@ export default function StudentTable() {
     const getProgramNameById = useCallback((id: string) => {
         return allPrograms?.find(p => p.id === id)?.name ?? "";
     }, [allPrograms]);
+
+    // Helper function to count students for a specific filter (respecting hierarchy)
+    const countStudentsForFilter = useCallback((filterType: 'branch' | 'status' | 'program' | 'date' | 'payment', filterValue: string) => {
+        const safeStudents = Array.isArray(students) ? students : [];
+        return safeStudents.filter((student) => {
+            // Status counts are independent - show all students regardless of other filters
+            if (filterType === 'status') {
+                if (filterValue === 'all') return true;
+                return (student.status ?? "").toString().toLowerCase() === filterValue.toLowerCase();
+            }
+            
+            // Branch filter (only if status matches or status is "all")
+            if (filterType === 'branch') {
+                if (statusFilter !== 'all') {
+                    if ((student.status ?? "").toString().toLowerCase() !== statusFilter.toLowerCase()) {
+                        return false;
+                    }
+                }
+                if (filterValue === 'all') return true;
+                return String(student.branch_id ?? "") === String(filterValue);
+            }
+            
+            // Payment Status filter (only if status and branch match or are "all")
+            if (filterType === 'payment') {
+                if (statusFilter !== 'all') {
+                    if ((student.status ?? "").toString().toLowerCase() !== statusFilter.toLowerCase()) {
+                        return false;
+                    }
+                }
+                if (workerTypeFilter !== 'all') {
+                    if (String(student.branch_id ?? "") !== String(workerTypeFilter)) {
+                        return false;
+                    }
+                }
+                if (filterValue === 'all') return true;
+                const paymentStatus = (student.payment_status ?? "").toString().toLowerCase();
+                const normalizedPayment = paymentStatus === "paid" ? "paid" : "unpaid";
+                return normalizedPayment === filterValue.toLowerCase();
+            }
+            
+            // Program filter (only if status and branch match or are "all")
+            if (filterType === 'program') {
+                if (statusFilter !== 'all') {
+                    if ((student.status ?? "").toString().toLowerCase() !== statusFilter.toLowerCase()) {
+                        return false;
+                    }
+                }
+                if (workerTypeFilter !== 'all') {
+                    if (String(student.branch_id ?? "") !== String(workerTypeFilter)) {
+                        return false;
+                    }
+                }
+                if (filterValue === 'all') return true;
+                return Array.isArray(student.program_names) &&
+                    student.program_names.some((n: string) => (n ?? "").toLowerCase() === filterValue.toLowerCase());
+            }
+            
+            if (filterType === 'date') {
+                if (filterValue === 'all') return true;
+                const now = Date.now();
+                const days = filterValue === 'last7Days' ? 7 : filterValue === 'last30Days' ? 30 : 60;
+                const cutoff = now - (days * 24 * 60 * 60 * 1000);
+                return new Date(student.admission_date ?? 0).getTime() >= cutoff;
+            }
+            return true;
+        }).length;
+    }, [students, statusFilter, workerTypeFilter]);
 
     const filteredItems = useMemo(() => {
         const safeStudents = Array.isArray(students) ? students : [];
@@ -529,42 +673,48 @@ export default function StudentTable() {
 
                 case "actions":
                     return (
-                        <div className="flex items-center gap-2">
-                            <EyeFilledIcon
-                                {...getEyesProps()}
-                                className="cursor-pointer text-default-400"
-                                height={18}
-                                width={18}
-                            />
+                        <div className="flex items-center gap-2 sm:gap-2">
+                            <div className="p-2 -m-2 touch-manipulation">
+                                <EyeFilledIcon
+                                    {...getEyesProps()}
+                                    className="cursor-pointer text-default-400"
+                                    height={20}
+                                    width={20}
+                                />
+                            </div>
 
-                            <EditStudent
-                                student={student}
-                                onUpdate={async () => {
-                                    // Invalidate and refetch to ensure fresh data
-                                    await queryClient.invalidateQueries({ queryKey: ["students"] });
-                                    // Force refetch with exact match
-                                    await queryClient.refetchQueries({ 
-                                        queryKey: ["students"],
-                                        exact: true 
-                                    });
-                                    console.log("🔄 Student data refreshed");
-                                }}
-                                trigger={
-                                    <EditLinearIcon
-                                        className="cursor-pointer text-default-400 hover:text-warning"
-                                        width={18}
-                                        height={18}
-                                    />
-                                }
-                            />
+                            <div className="p-2 -m-2 touch-manipulation">
+                                <EditStudent
+                                    student={student}
+                                    onUpdate={async () => {
+                                        // Invalidate and refetch to ensure fresh data
+                                        await queryClient.invalidateQueries({ queryKey: ["students"] });
+                                        // Force refetch with exact match
+                                        await queryClient.refetchQueries({ 
+                                            queryKey: ["students"],
+                                            exact: true 
+                                        });
+                                        console.log("🔄 Student data refreshed");
+                                    }}
+                                    trigger={
+                                        <EditLinearIcon
+                                            className="cursor-pointer text-default-400 hover:text-warning active:scale-95"
+                                            width={20}
+                                            height={20}
+                                        />
+                                    }
+                                />
+                            </div>
 
-                            <DeleteFilledIcon
-                                {...getDeleteProps()}
-                                onClick={() => handleDelete(student.id)}
-                                className="cursor-pointer text-default-400"
-                                height={18}
-                                width={18}
-                            />
+                            <div className="p-2 -m-2 touch-manipulation">
+                                <DeleteFilledIcon
+                                    {...getDeleteProps()}
+                                    onClick={() => handleDelete(student.id)}
+                                    className="cursor-pointer text-default-400 active:scale-95"
+                                    height={20}
+                                    width={20}
+                                />
+                            </div>
                         </div>
                     );
 
@@ -678,7 +828,7 @@ export default function StudentTable() {
                             onValueChange={onSearchChange}
                         />
                         <div>
-                            <Popover placement="bottom">
+                            <Popover placement="bottom-start" offset={10}>
                                 <PopoverTrigger>
                                     <Button
                                         className="bg-default-100 text-default-800"
@@ -694,52 +844,245 @@ export default function StudentTable() {
                                         Filter
                                     </Button>
                                 </PopoverTrigger>
-                                <PopoverContent className="w-80">
-                                    <div className="flex w-full flex-col gap-6 px-2 py-4">
+                                <PopoverContent className="w-80 dark text-foreground bg-background border-default-200">
+                                    <div className="flex w-full flex-col gap-6 px-2 py-4 max-h-[70vh] overflow-y-auto">
+                                        <RadioGroup
+                                            label="Status"
+                                            value={statusFilter}
+                                            onValueChange={setStatusFilter}
+                                            classNames={{
+                                                label: "text-foreground",
+                                            }}
+                                        >
+                                            <Radio 
+                                                value="all"
+                                                classNames={{
+                                                    label: "text-foreground",
+                                                }}
+                                            >
+                                                <div className="flex items-center justify-between w-full">
+                                                    <span>All</span>
+                                                    <Chip size="sm" variant="flat" className="ml-2">
+                                                        {countStudentsForFilter('status', 'all')}
+                                                    </Chip>
+                                                </div>
+                                            </Radio>
+                                            <Radio 
+                                                value="active"
+                                                classNames={{
+                                                    label: "text-foreground",
+                                                }}
+                                            >
+                                                <div className="flex items-center justify-between w-full">
+                                                    <span>Active</span>
+                                                    <Chip size="sm" variant="flat" className="ml-2">
+                                                        {countStudentsForFilter('status', 'active')}
+                                                    </Chip>
+                                                </div>
+                                            </Radio>
+                                            <Radio 
+                                                value="inactive"
+                                                classNames={{
+                                                    label: "text-foreground",
+                                                }}
+                                            >
+                                                <div className="flex items-center justify-between w-full">
+                                                    <span>Inactive</span>
+                                                    <Chip size="sm" variant="flat" className="ml-2">
+                                                        {countStudentsForFilter('status', 'inactive')}
+                                                    </Chip>
+                                                </div>
+                                            </Radio>
+                                            <Radio 
+                                                value="hold"
+                                                classNames={{
+                                                    label: "text-foreground",
+                                                }}
+                                            >
+                                                <div className="flex items-center justify-between w-full">
+                                                    <span>Hold</span>
+                                                    <Chip size="sm" variant="flat" className="ml-2">
+                                                        {countStudentsForFilter('status', 'hold')}
+                                                    </Chip>
+                                                </div>
+                                            </Radio>
+                                        </RadioGroup>
+
                                         <RadioGroup
                                             label="Branch"
                                             value={workerTypeFilter}
                                             onValueChange={setWorkerTypeFilter}
+                                            classNames={{
+                                                label: "text-foreground",
+                                            }}
                                         >
-                                            <Radio value="all">All</Radio>
-                                            <Radio value="873bea75-e6c4-4c32-b625-d11dd4221a57">Funmall TK</Radio>
-                                            <Radio value="659308e2-436f-43d7-a258-5a30adeb55dc">PengHout</Radio>
-                                            <Radio value="67610209-6fd3-46a4-98bb-199d7a7faf27">OCIC</Radio>
-                                        </RadioGroup>
-
-
-                                        <RadioGroup
-                                            label="StatusStudent"
-                                            value={statusFilter}
-                                            onValueChange={setStatusFilter}
-                                        >
-                                            <Radio value="all">All</Radio>
-                                            <Radio value="active">Active</Radio>
-                                            <Radio value="inactive">Inactive</Radio>
-                                            <Radio value="hold">Hold</Radio>
-                                        </RadioGroup>
-                                        <RadioGroup
-                                            key={workerTypeFilter}          // force remount when Branch changes
-                                            label="Program"
-                                            value={safeProgramFilter}       // use safe, controlled value
-                                            onValueChange={(val) => setProgramFilter(String(val))}
-                                        >
-                                            <Radio value="all">All</Radio>
-                                            {programOptionsForBranch.map((name) => (
-                                                <Radio key={name} value={name}>{name}</Radio>
+                                            {branchOptionsForStatus.map((branch) => (
+                                                <Radio 
+                                                    key={branch.id}
+                                                    value={branch.id}
+                                                    classNames={{
+                                                        label: "text-foreground",
+                                                    }}
+                                                >
+                                                    <div className="flex items-center justify-between w-full">
+                                                        <span>{branch.name}</span>
+                                                        <Chip size="sm" variant="flat" className="ml-2">
+                                                            {countStudentsForFilter('branch', branch.id)}
+                                                        </Chip>
+                                                    </div>
+                                                </Radio>
                                             ))}
                                         </RadioGroup>
 
+                                        <RadioGroup
+                                            label="Payment Status"
+                                            value={paymentStatusFilter}
+                                            onValueChange={setPaymentStatusFilter}
+                                            classNames={{
+                                                label: "text-foreground",
+                                            }}
+                                        >
+                                            <Radio 
+                                                value="all"
+                                                classNames={{
+                                                    label: "text-foreground",
+                                                }}
+                                            >
+                                                <div className="flex items-center justify-between w-full">
+                                                    <span>All</span>
+                                                    <Chip size="sm" variant="flat" className="ml-2">
+                                                        {countStudentsForFilter('payment', 'all')}
+                                                    </Chip>
+                                                </div>
+                                            </Radio>
+                                            <Radio 
+                                                value="paid"
+                                                classNames={{
+                                                    label: "text-foreground",
+                                                }}
+                                            >
+                                                <div className="flex items-center justify-between w-full">
+                                                    <span>Paid</span>
+                                                    <Chip size="sm" variant="flat" className="ml-2">
+                                                        {countStudentsForFilter('payment', 'paid')}
+                                                    </Chip>
+                                                </div>
+                                            </Radio>
+                                            <Radio 
+                                                value="unpaid"
+                                                classNames={{
+                                                    label: "text-foreground",
+                                                }}
+                                            >
+                                                <div className="flex items-center justify-between w-full">
+                                                    <span>Unpaid</span>
+                                                    <Chip size="sm" variant="flat" className="ml-2">
+                                                        {countStudentsForFilter('payment', 'unpaid')}
+                                                    </Chip>
+                                                </div>
+                                            </Radio>
+                                        </RadioGroup>
+
+                                        <RadioGroup
+                                            key={`${statusFilter}-${workerTypeFilter}`}          // force remount when Status or Branch changes
+                                            label="Program"
+                                            value={safeProgramFilter}       // use safe, controlled value
+                                            onValueChange={(val) => setProgramFilter(String(val))}
+                                            classNames={{
+                                                label: "text-foreground",
+                                            }}
+                                        >
+                                            <Radio 
+                                                value="all"
+                                                classNames={{
+                                                    label: "text-foreground",
+                                                }}
+                                            >
+                                                <div className="flex items-center justify-between w-full">
+                                                    <span>All</span>
+                                                    <Chip size="sm" variant="flat" className="ml-2">
+                                                        {countStudentsForFilter('program', 'all')}
+                                                    </Chip>
+                                                </div>
+                                            </Radio>
+                                            {programOptionsForBranch.map((name) => (
+                                                <Radio 
+                                                    key={name} 
+                                                    value={name}
+                                                    classNames={{
+                                                        label: "text-foreground",
+                                                    }}
+                                                >
+                                                    <div className="flex items-center justify-between w-full">
+                                                        <span>{name}</span>
+                                                        <Chip size="sm" variant="flat" className="ml-2">
+                                                            {countStudentsForFilter('program', name)}
+                                                        </Chip>
+                                                    </div>
+                                                </Radio>
+                                            ))}
+                                        </RadioGroup>
 
                                         <RadioGroup
                                             label="Admission Date"
                                             value={startDateFilter}
                                             onValueChange={setStartDateFilter}
+                                            classNames={{
+                                                label: "text-foreground",
+                                            }}
                                         >
-                                            <Radio value="all">All</Radio>
-                                            <Radio value="last7Days">Last 7 days</Radio>
-                                            <Radio value="last30Days">Last 30 days</Radio>
-                                            <Radio value="last60Days">Last 60 days</Radio>
+                                            <Radio 
+                                                value="all"
+                                                classNames={{
+                                                    label: "text-foreground",
+                                                }}
+                                            >
+                                                <div className="flex items-center justify-between w-full">
+                                                    <span>All</span>
+                                                    <Chip size="sm" variant="flat" className="ml-2">
+                                                        {countStudentsForFilter('date', 'all')}
+                                                    </Chip>
+                                                </div>
+                                            </Radio>
+                                            <Radio 
+                                                value="last7Days"
+                                                classNames={{
+                                                    label: "text-foreground",
+                                                }}
+                                            >
+                                                <div className="flex items-center justify-between w-full">
+                                                    <span>Last 7 days</span>
+                                                    <Chip size="sm" variant="flat" className="ml-2">
+                                                        {countStudentsForFilter('date', 'last7Days')}
+                                                    </Chip>
+                                                </div>
+                                            </Radio>
+                                            <Radio 
+                                                value="last30Days"
+                                                classNames={{
+                                                    label: "text-foreground",
+                                                }}
+                                            >
+                                                <div className="flex items-center justify-between w-full">
+                                                    <span>Last 30 days</span>
+                                                    <Chip size="sm" variant="flat" className="ml-2">
+                                                        {countStudentsForFilter('date', 'last30Days')}
+                                                    </Chip>
+                                                </div>
+                                            </Radio>
+                                            <Radio 
+                                                value="last60Days"
+                                                classNames={{
+                                                    label: "text-foreground",
+                                                }}
+                                            >
+                                                <div className="flex items-center justify-between w-full">
+                                                    <span>Last 60 days</span>
+                                                    <Chip size="sm" variant="flat" className="ml-2">
+                                                        {countStudentsForFilter('date', 'last60Days')}
+                                                    </Chip>
+                                                </div>
+                                            </Radio>
                                         </RadioGroup>
                                     </div>
                                 </PopoverContent>
@@ -767,6 +1110,9 @@ export default function StudentTable() {
                                     items={headerColumns.filter(
                                         (c) => !["name", "nationality"].includes(c.uid)
                                     )}
+                                    classNames={{
+                                        base: "dark text-foreground bg-background max-h-[300px] overflow-y-auto",
+                                    }}
                                 >
                                     {(item) => (
                                         <DropdownItem
@@ -779,6 +1125,9 @@ export default function StudentTable() {
                                                             ? "descending"
                                                             : "ascending",
                                                 });
+                                            }}
+                                            classNames={{
+                                                base: "text-foreground data-[hover=true]:bg-default-100",
                                             }}
                                         >
                                             {item.name}
@@ -811,9 +1160,19 @@ export default function StudentTable() {
                                     selectedKeys={visibleColumns}
                                     selectionMode="multiple"
                                     onSelectionChange={setVisibleColumns}
+                                    classNames={{
+                                        base: "dark text-foreground bg-background max-h-[300px] overflow-y-auto",
+                                    }}
                                 >
                                     {(item) => (
-                                        <DropdownItem key={item.uid}>{item.name}</DropdownItem>
+                                        <DropdownItem 
+                                            key={item.uid}
+                                            classNames={{
+                                                base: "text-foreground data-[hover=true]:bg-default-100",
+                                            }}
+                                        >
+                                            {item.name}
+                                        </DropdownItem>
                                     )}
                                 </DropdownMenu>
                             </Dropdown>
@@ -848,14 +1207,24 @@ export default function StudentTable() {
                                     if (key === "mark-unpaid") markSelectedAs("Unpaid");
                                     if (key === "clear-selection") setSelectedKeys(new Set());
                                 }}
+                                classNames={{
+                                    base: "dark text-foreground bg-background max-h-[300px] overflow-y-auto",
+                                }}
                             >
-                                <DropdownItem key="selected-indicator" isReadOnly className="cursor-default text-default-400">
+                                <DropdownItem 
+                                    key="selected-indicator" 
+                                    isReadOnly 
+                                    className="cursor-default text-default-400"
+                                >
                                     {selectedCount} selected
                                 </DropdownItem>
 
                                 <DropdownItem
                                     key="mark-paid"
                                     startContent={<Icon icon="solar:check-circle-linear" width={16} className="text-success" />}
+                                    classNames={{
+                                        base: "text-foreground data-[hover=true]:bg-default-100",
+                                    }}
                                 >
                                     Mark as Paid
                                 </DropdownItem>
@@ -863,11 +1232,20 @@ export default function StudentTable() {
                                 <DropdownItem
                                     key="mark-unpaid"
                                     startContent={<Icon icon="solar:close-circle-linear" width={16} className="text-danger" />}
+                                    classNames={{
+                                        base: "text-foreground data-[hover=true]:bg-default-100",
+                                    }}
                                 >
                                     Mark as Unpaid
                                 </DropdownItem>
 
-                                <DropdownItem key="clear-selection" className="text-default-500">
+                                <DropdownItem 
+                                    key="clear-selection" 
+                                    className="text-default-400"
+                                    classNames={{
+                                        base: "text-default-400 data-[hover=true]:bg-default-100",
+                                    }}
+                                >
                                     Clear selection
                                 </DropdownItem>
                             </DropdownMenu>
@@ -885,34 +1263,60 @@ export default function StudentTable() {
         sortDescriptor,
         statusFilter,
         workerTypeFilter,
+        paymentStatusFilter,
         startDateFilter,
         safeProgramFilter, // FIX: used instead of programFilter
         programOptionsForBranch,
+        branchOptionsForStatus,
+        countStudentsForFilter,
         onSearchChange,
         markSelectedAs, // FIX: Added missing dependency
         selectedCount,  // FIX: Added missing dependency
     ]);
 
     const studentLength = filteredItems.length;
+    const totalStudents = Array.isArray(students) ? students.length : 0;
+    
+    // Check if any filters are active (not "all")
+    const hasActiveFilters = useMemo(() => {
+        return workerTypeFilter !== "all" || 
+               statusFilter !== "all" || 
+               safeProgramFilter !== "all" || 
+               paymentStatusFilter !== "all" ||
+               startDateFilter !== "all" ||
+               (filterValue && filterValue.trim() !== "");
+    }, [workerTypeFilter, statusFilter, safeProgramFilter, paymentStatusFilter, startDateFilter, filterValue]);
 
     const topBar = useMemo(() => {
         return (
             <div className="mb-[18px] flex items-center justify-between">
-                <div className="flex w-[226px] items-center gap-2">
+                <div className="flex items-center gap-2">
                     <h1 className="text-2xl font-[700] leading-[32px]">Students</h1>
-                    <Chip
-                        className="hidden items-center text-default-500 sm:flex"
-                        size="sm"
-                        variant="flat"
-                    >
-                        {studentLength}
-                    </Chip>
+                    {hasActiveFilters && (
+                        <Chip
+                            className="flex items-center text-default-500"
+                            size="sm"
+                            variant="flat"
+                            color="primary"
+                        >
+                            {studentLength} {studentLength === 1 ? 'student' : 'students'}
+                        </Chip>
+                    )}
+                    {!hasActiveFilters && (
+                        <Chip
+                            className="hidden items-center text-default-500 sm:flex"
+                            size="sm"
+                            variant="flat"
+                        >
+                            {totalStudents}
+                        </Chip>
+                    )}
                 </div>
                 <AddStudent onUpdate={() => queryClient.invalidateQueries({ queryKey: ["students"] })} />
 
             </div>
         );
-    }, [studentLength, queryClient]); // FIX: Added queryClient dependency
+    }, [studentLength, totalStudents, hasActiveFilters, queryClient]); // FIX: Added queryClient dependency
 
     const bottomContent = useMemo(() => {
         return (

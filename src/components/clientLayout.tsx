@@ -27,14 +27,14 @@ export default function ClientLayout({ children }: { children: React.ReactNode }
         const isAuthenticated = !!session;
 
         if (!isAuthenticated && !isPublicPage && !hasRedirected.current) {
-          hasRedirected.current = true;
-          router.replace("/login");
+      hasRedirected.current = true;
+      router.replace("/login");
           return;
         }
 
         if (isAuthenticated && pathname === "/login" && !hasRedirected.current) {
-          hasRedirected.current = true;
-          router.replace("/");
+      hasRedirected.current = true;
+      router.replace("/");
           return;
         }
 
@@ -45,10 +45,10 @@ export default function ClientLayout({ children }: { children: React.ReactNode }
         if (!isPublicPage && !hasRedirected.current) {
           hasRedirected.current = true;
           router.replace("/login");
-        } else {
+    } else {
           setIsReady(true);
         }
-      }
+    }
     };
 
     checkAuth();

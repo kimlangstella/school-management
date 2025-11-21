@@ -73,10 +73,27 @@ export default function AttendancePage() {
                 setSelectedBranchId(key as string);
                 setSelectedProgramId(''); // reset program on branch change
               }}
+              classNames={{
+                base: "dark text-foreground bg-background max-h-[300px] overflow-y-auto",
+              }}
             >
-              <DropdownItem key="">All Branches</DropdownItem>
+              <DropdownItem 
+                key=""
+                classNames={{
+                  base: "text-foreground data-[hover=true]:bg-default-100",
+                }}
+              >
+                All Branches
+              </DropdownItem>
               {branches.map((b) => (
-                <DropdownItem key={b.id}>{b.name}</DropdownItem>
+                <DropdownItem 
+                  key={b.id}
+                  classNames={{
+                    base: "text-foreground data-[hover=true]:bg-default-100",
+                  }}
+                >
+                  {b.name}
+                </DropdownItem>
               ))}
             </DropdownMenu>
           </Dropdown>
@@ -95,10 +112,27 @@ export default function AttendancePage() {
               aria-label="Select Program"
               selectedKeys={new Set([selectedProgramId])}
               onAction={(key) => setSelectedProgramId(key as string)}
+              classNames={{
+                base: "dark text-foreground bg-background max-h-[300px] overflow-y-auto",
+              }}
             >
-              <DropdownItem key="">All Programs</DropdownItem>
+              <DropdownItem 
+                key=""
+                classNames={{
+                  base: "text-foreground data-[hover=true]:bg-default-100",
+                }}
+              >
+                All Programs
+              </DropdownItem>
               {filteredPrograms.map((p) => (
-                <DropdownItem key={p.id}>{p.name}</DropdownItem>
+                <DropdownItem 
+                  key={p.id}
+                  classNames={{
+                    base: "text-foreground data-[hover=true]:bg-default-100",
+                  }}
+                >
+                  {p.name}
+                </DropdownItem>
               ))}
             </DropdownMenu>
           </Dropdown>

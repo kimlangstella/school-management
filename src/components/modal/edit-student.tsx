@@ -307,17 +307,32 @@ const supabase = createClient();
     onUpdate(student);
   };
 
-  return (
-    <>
-      {trigger ? (
-        <div onClick={onOpen} className="inline-flex cursor-pointer">
-          {trigger}
-        </div>
-      ) : (
-        <Button color="warning" onPress={onOpen}>
-          Edit Student
-        </Button>
-      )}
+      return (
+        <>
+          {trigger ? (
+            <div 
+              onClick={onOpen} 
+              onTouchStart={(e) => {
+                e.stopPropagation();
+                onOpen();
+              }}
+              className="inline-flex cursor-pointer touch-manipulation"
+              role="button"
+              tabIndex={0}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' || e.key === ' ') {
+                  e.preventDefault();
+                  onOpen();
+                }
+              }}
+            >
+              {trigger}
+            </div>
+          ) : (
+            <Button color="warning" onPress={onOpen}>
+              Edit Student
+            </Button>
+          )}
 
       <Modal 
         isOpen={isOpen} 

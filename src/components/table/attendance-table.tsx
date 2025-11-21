@@ -282,17 +282,17 @@ export default function AttendanceTable({ selectedBranchId, selectedProgramId }:
                 <div className="hidden sm:block grow" />
                 <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
                     <Button color="primary" size="sm" onPress={() => setAddOpen(true)} className="w-full sm:w-auto">
-                        <Icon icon="solar:add-circle-bold" width={18} className="mr-1" />
-                        Add Attendance
-                    </Button>
-                    <Button
-                        color="secondary"
-                        size="sm"
-                        onPress={() => generateAttendancePDF(filteredRecords, branches)}
+                    <Icon icon="solar:add-circle-bold" width={18} className="mr-1" />
+                    Add Attendance
+                </Button>
+                <Button
+                    color="secondary"
+                    size="sm"
+                    onPress={() => generateAttendancePDF(filteredRecords, branches)}
                         className="w-full sm:w-auto"
-                    >
-                        Download Attendance PDF
-                    </Button>
+                >
+                    Download Attendance PDF
+                </Button>
                 </div>
 
             </div>

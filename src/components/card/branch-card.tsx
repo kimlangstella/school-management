@@ -135,10 +135,37 @@ const CircleChartCard = React.forwardRef<
                                 <Icon height={16} icon="solar:menu-dots-bold" width={16} />
                             </Button>
                         </DropdownTrigger>
-                        <DropdownMenu itemClasses={{ title: 'text-tiny' }} variant="flat">
-                            <DropdownItem key="view-details">View Details</DropdownItem>
-                            <DropdownItem key="export-data">Export Data</DropdownItem>
-                            <DropdownItem key="set-alert">Set Alert</DropdownItem>
+                        <DropdownMenu 
+                            itemClasses={{ title: 'text-tiny' }} 
+                            variant="flat"
+                            classNames={{
+                                base: "dark text-foreground bg-background max-h-[300px] overflow-y-auto",
+                            }}
+                        >
+                            <DropdownItem 
+                                key="view-details"
+                                classNames={{
+                                    base: "text-foreground data-[hover=true]:bg-default-100",
+                                }}
+                            >
+                                View Details
+                            </DropdownItem>
+                            <DropdownItem 
+                                key="export-data"
+                                classNames={{
+                                    base: "text-foreground data-[hover=true]:bg-default-100",
+                                }}
+                            >
+                                Export Data
+                            </DropdownItem>
+                            <DropdownItem 
+                                key="set-alert"
+                                classNames={{
+                                    base: "text-foreground data-[hover=true]:bg-default-100",
+                                }}
+                            >
+                                Set Alert
+                            </DropdownItem>
                         </DropdownMenu>
                     </Dropdown>
                 </div>

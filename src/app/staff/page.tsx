@@ -280,7 +280,9 @@ const handleDelete = async (id: string) => {
     // color="primary"
     isIconOnly
     aria-label="Edit"
+    className="min-w-[44px] min-h-[44px] sm:min-w-0 sm:min-h-0 touch-manipulation"
     onClick={() => openEditModal(user)}
+    onPress={() => openEditModal(user)}
   >
     <PencilSquareIcon className="w-5 h-5" />
   </Button>
@@ -290,7 +292,9 @@ const handleDelete = async (id: string) => {
     // color="danger"
     isIconOnly
     aria-label="Delete"
+    className="min-w-[44px] min-h-[44px] sm:min-w-0 sm:min-h-0 touch-manipulation"
     onClick={() => handleDelete(user.id)}
+    onPress={() => handleDelete(user.id)}
   >
     <TrashIcon className="w-5 h-5" />
   </Button>

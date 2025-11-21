@@ -264,16 +264,28 @@ export default function ClassroomCard() {
                                                 <Icon icon="solar:menu-dots-bold" width={18} />
                                             </Button>
                                         </DropdownTrigger>
-                                        <DropdownMenu aria-label="Classroom actions" onAction={(key) => handleAction(key, cls)}>
+                                        <DropdownMenu 
+                                            aria-label="Classroom actions" 
+                                            onAction={(key) => handleAction(key, cls)}
+                                            classNames={{
+                                                base: "dark text-foreground bg-background max-h-[300px] overflow-y-auto",
+                                            }}
+                                        >
                                             <DropdownItem
                                                 key="manage"
                                                 startContent={<Icon icon="solar:users-group-rounded-linear" width={16} />}
+                                                classNames={{
+                                                    base: "text-foreground data-[hover=true]:bg-default-100",
+                                                }}
                                             >
                                                 Manage students
                                             </DropdownItem>
                                             <DropdownItem
                                                 key="archive"
                                                 startContent={<Icon icon="solar:archive-minimalistic-linear" width={16} />}
+                                                classNames={{
+                                                    base: "text-foreground data-[hover=true]:bg-default-100",
+                                                }}
                                             >
                                                 Archive
                                             </DropdownItem>
@@ -281,6 +293,9 @@ export default function ClassroomCard() {
                                                 key="delete"
                                                 className="text-danger"
                                                 startContent={<Icon icon="solar:trash-bin-minimalistic-2-linear" width={16} />}
+                                                classNames={{
+                                                    base: "text-danger data-[hover=true]:bg-danger-50",
+                                                }}
                                             >
                                                 Delete
                                             </DropdownItem>

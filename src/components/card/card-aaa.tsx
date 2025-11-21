@@ -50,14 +50,27 @@ export default function CardAaa({
               </span>
             </Button>
           </DropdownTrigger>
-          <DropdownMenu>
-            <DropdownItem key="edit" onClick={onEdit}>
+          <DropdownMenu
+            classNames={{
+              base: "dark text-foreground bg-background max-h-[300px] overflow-y-auto",
+            }}
+          >
+            <DropdownItem 
+              key="edit" 
+              onClick={onEdit}
+              classNames={{
+                base: "text-foreground data-[hover=true]:bg-default-100",
+              }}
+            >
               Edit
             </DropdownItem>
             <DropdownItem
               key="delete"
               onClick={onDelete}
               className="text-danger"
+              classNames={{
+                base: "text-danger data-[hover=true]:bg-danger-50",
+              }}
             >
               Delete
             </DropdownItem>

@@ -252,27 +252,27 @@ export default function AddStudent({ onUpdate }: AddStudentProps) {
                                             </p>
                                         </div>
                                     ) : (
-                                        <div className="w-full max-w-[400px] border px-2 py-2 rounded-xl border-default-200 dark:border-default-100">
-                                            <Listbox
-                                                classNames={{ base: "max-w-full", list: "max-h-[150px] overflow-y-auto" }}
-                                                selectedKeys={new Set(selectedPrograms)}
-                                                items={filteredPrograms}
-                                                label="Select Programs"
-                                                selectionMode="multiple"
-                                                variant="flat"
-                                                onSelectionChange={(keys) => {
-                                                    if (keys instanceof Set) setSelectedPrograms([...keys].map((k) => k.toString()));
-                                                }}>
-                                                {(program: Program) => (
-                                                    <ListboxItem key={program.id} textValue={program.name}>
-                                                        <div className="flex flex-col">
-                                                            <span className="text-small font-medium">{program.name}</span>
-                                                            <span className="text-tiny text-default-400">{program.branch_name}</span>
-                                                        </div>
-                                                    </ListboxItem>
-                                                )}
-                                            </Listbox>
-                                        </div>
+                                    <div className="w-full max-w-[400px] border px-2 py-2 rounded-xl border-default-200 dark:border-default-100">
+                                        <Listbox
+                                            classNames={{ base: "max-w-full", list: "max-h-[150px] overflow-y-auto" }}
+                                            selectedKeys={new Set(selectedPrograms)}
+                                            items={filteredPrograms}
+                                            label="Select Programs"
+                                            selectionMode="multiple"
+                                            variant="flat"
+                                            onSelectionChange={(keys) => {
+                                                if (keys instanceof Set) setSelectedPrograms([...keys].map((k) => k.toString()));
+                                            }}>
+                                            {(program: Program) => (
+                                                <ListboxItem key={program.id} textValue={program.name}>
+                                                    <div className="flex flex-col">
+                                                        <span className="text-small font-medium">{program.name}</span>
+                                                        <span className="text-tiny text-default-400">{program.branch_name}</span>
+                                                    </div>
+                                                </ListboxItem>
+                                            )}
+                                        </Listbox>
+                                    </div>
                                     )}
                                 </div>
 
@@ -285,7 +285,7 @@ export default function AddStudent({ onUpdate }: AddStudentProps) {
                                 {/* Created By and Modified By are automatically set to current user - hidden fields */}
                                 {selectedCreatedBy && (
                                     <Input
-                                        label="Created By"
+                                    label="Created By"
                                         value={users.find(u => u.id === selectedCreatedBy)?.name || "Current User"}
                                         isReadOnly
                                         isDisabled
@@ -294,7 +294,7 @@ export default function AddStudent({ onUpdate }: AddStudentProps) {
 
                                 {selectedModifiedBy && (
                                     <Input
-                                        label="Modified By"
+                                    label="Modified By"
                                         value={users.find(u => u.id === selectedModifiedBy)?.name || "Current User"}
                                         isReadOnly
                                         isDisabled

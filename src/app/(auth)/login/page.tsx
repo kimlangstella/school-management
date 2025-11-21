@@ -75,7 +75,7 @@ const handleLogin = async (e: React.FormEvent) => {
 
 
   return (
-    <div className=" dark flex h-screen w-full flex-col items-center justify-center p-4">
+    <div className="dark text-foreground bg-background flex h-screen w-full flex-col items-center justify-center p-4">
       <div className="flex flex-col items-center pb-4 sm:pb-6">
             <Image
             src="/AAA_logo.png"
@@ -84,11 +84,11 @@ const handleLogin = async (e: React.FormEvent) => {
             height={80}
             className="rounded-full sm:w-[100px] sm:h-[100px]"
           />
-        <p className="text-lg sm:text-xl font-medium mt-2">Welcome Back</p>
-        <p className="text-xs sm:text-small text-default-500 text-center">Log in to your account to continue</p>
+        <p className="text-lg sm:text-xl font-medium mt-2 text-foreground">Welcome Back</p>
+        <p className="text-xs sm:text-small text-default-400 text-center">Log in to your account to continue</p>
       </div>
-      <div className="mt-2 flex w-full max-w-sm flex-col gap-4 rounded-large bg-content1 px-4 sm:px-8 py-4 sm:py-6 shadow-small">
-        {errorMessage && <p className="text-red-600 text-center">{errorMessage}</p>}
+      <div className="mt-2 flex w-full max-w-sm flex-col gap-4 rounded-large bg-content1 dark:bg-default-100 px-4 sm:px-8 py-4 sm:py-6 shadow-small">
+        {errorMessage && <p className="text-danger text-center">{errorMessage}</p>}
 
         <Form className="flex flex-col gap-3" validationBehavior="native" onSubmit={handleLogin}>
           <Input
@@ -99,6 +99,10 @@ const handleLogin = async (e: React.FormEvent) => {
             type="email"
             variant="bordered"
             onChange={handleChange}
+            classNames={{
+              label: "text-foreground",
+              input: "text-foreground",
+            }}
           />
           <Input
             isRequired
@@ -116,10 +120,22 @@ const handleLogin = async (e: React.FormEvent) => {
               </button>
             }
             onChange={handleChange}
+            classNames={{
+              label: "text-foreground",
+              input: "text-foreground",
+            }}
           />
           <div className="flex w-full items-center justify-between px-1 py-2">
-            <Checkbox name="remember" size="sm">Remember me</Checkbox>
-            <Link className="text-default-500" href="#" size="sm">Forgot password?</Link>
+            <Checkbox 
+              name="remember" 
+              size="sm"
+              classNames={{
+                label: "text-foreground",
+              }}
+            >
+              Remember me
+            </Checkbox>
+            <Link className="text-default-400 hover:text-primary" href="#" size="sm">Forgot password?</Link>
           </div>
           <Button className="w-full" color="primary" type="submit" disabled={isSubmitting}>
             {isSubmitting ? "Logging in..." : "Log In"}

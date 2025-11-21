@@ -77,7 +77,12 @@ const supabase = createClient();
                     size="sm"
                     color="warning"
                     variant="flat"
+                    className="min-h-[44px] sm:min-h-0 touch-manipulation"
                     onClick={() => {
+                      setSelectedSchool(school);
+                      setEditModalOpen(true);
+                    }}
+                    onPress={() => {
                       setSelectedSchool(school);
                       setEditModalOpen(true);
                     }}

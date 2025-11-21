@@ -11,9 +11,9 @@ export default function ProgramPage() {
             <div className="flex flex-col sm:flex-row justify-between gap-4 mb-4">
                 <h1 className="text-xl sm:text-2xl font-bold">AAA Classes</h1>
                 <div className="flex justify-center sm:justify-end gap-2 sm:gap-3 items-end">
-                    <AddEnrollment></AddEnrollment>
-                    <AddClassroomModal></AddClassroomModal>
-                </div>
+                        <AddEnrollment></AddEnrollment>
+                        <AddClassroomModal></AddClassroomModal>
+                    </div>
             </div>
             
             <div className={"container mx-auto flex flex-wrap justify-start gap-4 sm:gap-6"}>
