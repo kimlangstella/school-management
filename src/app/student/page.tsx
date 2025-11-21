@@ -10,7 +10,7 @@ const StudentTable = dynamic(() => import("@/components/table/student-table"), {
 
 export default function StudentPage() {
   return (
-    <div className="p-8">
+    <div className="p-2 sm:p-4 lg:p-8">
       <Suspense fallback={<div>Loading table...</div>}>
         <StudentTable />
       </Suspense>

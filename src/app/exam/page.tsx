@@ -68,10 +68,10 @@ const handleEdit = (exam: Exam) => {
   }
 
   return (
-<div className="p-6">
- <div className='flex items-center justify-between mb-6'>
+<div className="p-2 sm:p-4 lg:p-6">
+ <div className='flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-4 sm:mb-6'>
   
-  <h1 className="text-2xl font-bold mb-6">All Exams</h1>
+  <h1 className="text-xl sm:text-2xl font-bold">All Exams</h1>
    <AddExam />
   <EditExamModal
     examToEdit={editExam}
@@ -86,7 +86,7 @@ const handleEdit = (exam: Exam) => {
   {loading ? (
     <p className="text-gray-500">Loading...</p>
   ) : (
-    <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
+    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
       {exams.map((exam) => (
         <CardAaa
           key={exam.id}

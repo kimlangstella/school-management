@@ -104,7 +104,7 @@ export default function BranchCard() {
     }));
 
     return (
-        <dl className="grid w-full grid-cols-1 gap-5 md:grid-cols-2 lg:grid-cols-4">
+        <dl className="grid w-full grid-cols-1 gap-4 sm:gap-5 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
             {chartData.map((item, index) => (
                 <CircleChartCard key={index} {...item} />
             ))}

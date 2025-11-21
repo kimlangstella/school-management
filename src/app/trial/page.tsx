@@ -10,7 +10,7 @@ const TrialTable = dynamic(() => import("@/components/table/trial-table"), {
 
 export default function TrialPage() {
   return (
-    <div className="p-8">
+    <div className="p-2 sm:p-4 lg:p-8">
       <Suspense fallback={<div>Loading trial data...</div>}>
         <TrialTable />
       </Suspense>

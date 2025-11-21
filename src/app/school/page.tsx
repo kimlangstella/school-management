@@ -11,9 +11,9 @@ export default function SchoolPage() {
   const onOpenChange = () => setIsOpen((prev) => !prev);
 
   return (
-    <div className="p-4">
-      <div className="flex justify-between items-center mb-4">
-        <h1 className="text-3xl font-bold">🏫 School List</h1>
+    <div className="p-2 sm:p-4">
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-4">
+        <h1 className="text-xl sm:text-2xl lg:text-3xl font-bold">🏫 School List</h1>
         <Button
           color="primary"
           onPress={() => setIsOpen(true)}

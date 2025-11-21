@@ -94,9 +94,9 @@ const getProgramNameById = (programId: string): string => {
     : courses;
 
   return (
-    <div className="px-6 mt-6 mb-6">
-      <div className="flex flex-wrap items-center justify-between mb-6">
-        <h2 className="text-2xl font-bold text-default-900">Courses</h2>
+    <div className="px-2 sm:px-4 lg:px-6 mt-4 sm:mt-6 mb-4 sm:mb-6">
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-4 sm:mb-6">
+        <h2 className="text-xl sm:text-2xl font-bold text-default-900">Courses</h2>
         <AddCourse onSuccess={fetchCourses} />
       </div>
 

@@ -41,22 +41,23 @@ const supabase = createClient();
   }, []);
 
   return (
-    <div className="p-6">
-      <Card className="p-6 shadow-md border border-default-100 rounded-lg bg-background">
-        <div className="flex items-center justify-between mb-4">
-          <h2 className="text-xl font-semibold text-default-900">School List</h2>
+    <div className="p-2 sm:p-4 lg:p-6">
+      <Card className="p-4 sm:p-6 shadow-md border border-default-100 rounded-lg bg-background">
+        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-4">
+          <h2 className="text-lg sm:text-xl font-semibold text-default-900">School List</h2>
 
           {/* Optional: add button for adding new school */}
           {/* <Button color="primary" size="sm">Add School</Button> */}
         </div>
 
-        {error && <p className="text-red-500 mb-4">{error}</p>}
+        {error && <p className="text-red-500 mb-4 text-sm">{error}</p>}
 
-        <Table
-          isStriped
-          aria-label="School Table"
-          className="rounded-xl overflow-hidden w-full"
-        >
+        <div className="overflow-x-auto">
+          <Table
+            isStriped
+            aria-label="School Table"
+            className="rounded-xl overflow-hidden w-full min-w-[600px]"
+          >
           <TableHeader>
             <TableColumn>#</TableColumn>
             <TableColumn>School Name</TableColumn>
@@ -88,6 +89,7 @@ const supabase = createClient();
             ))}
           </TableBody>
         </Table>
+        </div>
       </Card>
 
       {/* Edit Modal */}

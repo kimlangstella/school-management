@@ -68,14 +68,14 @@ export default function ProgramPage() {
 
   return (
     <>
-      <div className="flex items-center justify-between px-6 mt-6 mb-4">
-        <h2 className="text-xl font-bold">Programs</h2>
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 px-2 sm:px-4 lg:px-6 mt-4 sm:mt-6 mb-4">
+        <h2 className="text-lg sm:text-xl font-bold">Programs</h2>
         <AddProgram onSuccess={fetchPrograms} />
       </div>
 
-      <div className="flex flex-wrap items-center gap-3 px-6 mb-6">
+      <div className="flex flex-wrap items-center gap-2 sm:gap-3 px-2 sm:px-4 lg:px-6 mb-4 sm:mb-6 overflow-x-auto">
         <button
-          className={`px-4 py-2 rounded-md border text-sm ${
+          className={`px-3 sm:px-4 py-2 rounded-md border text-xs sm:text-sm whitespace-nowrap ${
             selectedBranch === null ? 'bg-primary text-white' : 'bg-default-100'
           }`}
           onClick={() => setSelectedBranch(null)}
@@ -85,7 +85,7 @@ export default function ProgramPage() {
         {branches.map(branch => (
           <button
             key={branch.id}
-            className={`px-4 py-2 rounded-md border text-sm ${
+            className={`px-3 sm:px-4 py-2 rounded-md border text-xs sm:text-sm whitespace-nowrap ${
               selectedBranch === branch.id ? 'bg-primary text-white' : 'bg-default-100'
             }`}
             onClick={() => setSelectedBranch(branch.id)}
@@ -95,8 +95,8 @@ export default function ProgramPage() {
         ))}
       </div>
 
-      <div className="px-6 pb-10">
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
+      <div className="px-2 sm:px-4 lg:px-6 pb-6 sm:pb-10">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
           {filteredPrograms.length > 0 ? (
             filteredPrograms.map(program => (
               <CardAaa

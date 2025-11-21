@@ -156,10 +156,10 @@ const handleDelete = async (id: string) => {
   };
 
   return (
-    <div className="p-6 space-y-6">
-<div className="flex items-center justify-between mb-4">
-  <h2 className="text-white text-xl font-semibold">Users</h2>
-  <Button color="primary" onClick={openAddModal}>
+    <div className="p-2 sm:p-4 lg:p-6 space-y-4 sm:space-y-6">
+<div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-4">
+  <h2 className="text-white text-lg sm:text-xl font-semibold">Users</h2>
+  <Button color="primary" onClick={openAddModal} size="sm" className="w-full sm:w-auto">
     + Add User
   </Button>
 </div>
@@ -168,8 +168,8 @@ const handleDelete = async (id: string) => {
 
       {/* Modal */}
       {isModalOpen && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-black p-6 rounded-lg shadow-lg max-w-md w-full relative">
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-black p-4 sm:p-6 rounded-lg shadow-lg max-w-md w-full relative max-h-[90vh] overflow-y-auto">
             <button
               className="absolute top-2 right-2 text-gray-500 hover:text-black"
               onClick={() => {
@@ -220,6 +220,8 @@ const handleDelete = async (id: string) => {
       <Image
         src={selectedUser.profile_url}
         alt="Profile"
+        width={40}
+        height={40}
         className="w-10 h-10 rounded-full object-cover border"
       />
     </div>
@@ -246,7 +248,8 @@ const handleDelete = async (id: string) => {
       )}
 
       {/* User Table */}
-      <Table isStriped aria-label="User Table">
+      <div className="overflow-x-auto">
+        <Table isStriped aria-label="User Table" className="min-w-[600px]">
         <TableHeader>
           <TableColumn>#</TableColumn>
           <TableColumn>Profile</TableColumn>
@@ -298,6 +301,7 @@ const handleDelete = async (id: string) => {
           ))}
         </TableBody>
       </Table>
+      </div>
     </div>
   );
 }

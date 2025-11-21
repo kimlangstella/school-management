@@ -73,6 +73,7 @@ type ProgramData = {
 };
 
 export default function StudentTable() {
+    const supabase = createClient();
     const [filterValue, setFilterValue] = useState("");
     const [selectedKeys, setSelectedKeys] = useState<Selection>(new Set([]));
     const [visibleColumns, setVisibleColumns] = useState<Selection>(
@@ -138,11 +139,13 @@ export default function StudentTable() {
 
     const {
         data: students,
-        // Removed unused destructuring (studentsLoading, etc.)
+        isLoading: studentsLoading,
+        isError: studentsError,
+        error: studentsErrorDetails,
     } = useQuery({
         queryKey: ["students"],
         queryFn: fetchStudents,
-        staleTime: 5 * 60 * 1000,
+        staleTime: 0, // Always consider data stale to allow refetching
         cacheTime: 10 * 60 * 1000
     });
 
@@ -513,6 +516,8 @@ export default function StudentTable() {
                             <Image
                                 src={`https://flagcdn.com/${countryCode?.toLowerCase()}.svg`}
                                 alt="Flag"
+                                width={16}
+                                height={16}
                                 className="h-[16px] w-[16px] object-cover rounded-full"
                             />
                             <p className="text-nowrap text-small text-default-foreground">
@@ -534,8 +539,15 @@ export default function StudentTable() {
 
                             <EditStudent
                                 student={student}
-                                onUpdate={() => {
-                                    queryClient.invalidateQueries({ queryKey: ["students"] });
+                                onUpdate={async () => {
+                                    // Invalidate and refetch to ensure fresh data
+                                    await queryClient.invalidateQueries({ queryKey: ["students"] });
+                                    // Force refetch with exact match
+                                    await queryClient.refetchQueries({ 
+                                        queryKey: ["students"],
+                                        exact: true 
+                                    });
+                                    console.log("🔄 Student data refreshed");
                                 }}
                                 trigger={
                                     <EditLinearIcon
@@ -652,11 +664,11 @@ export default function StudentTable() {
 
     const topContent = useMemo(() => {
         return (
-            <div className="flex items-center gap-4 overflow-auto px-[6px] py-[4px]">
-                <div className="flex items-center gap-3">
-                    <div className="flex items-center gap-4">
+            <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 sm:gap-4 overflow-auto px-[6px] py-[4px]">
+                <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 sm:gap-3 w-full sm:w-auto">
+                    <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 sm:gap-4 w-full sm:w-auto">
                         <Input
-                            className="min-w-[200px]"
+                            className="w-full sm:min-w-[200px]"
                             endContent={
                                 <SearchIcon className="text-default-400" width={16} />
                             }
@@ -950,25 +962,50 @@ export default function StudentTable() {
         onNextPage,
     ]);
 
+    if (studentsError) {
+        return (
+            <div className="h-full w-full pr-2 pt-3 flex items-center justify-center">
+                <div className="text-center">
+                    <p className="text-red-500 text-lg font-semibold">Error loading students</p>
+                    <p className="text-default-500 text-sm mt-2">
+                        {studentsErrorDetails instanceof Error 
+                            ? studentsErrorDetails.message 
+                            : "An unknown error occurred"}
+                    </p>
+                </div>
+            </div>
+        );
+    }
+
+    if (studentsLoading) {
+        return (
+            <div className="h-full w-full pr-2 pt-3 flex items-center justify-center">
+                <p className="text-default-400">Loading students...</p>
+            </div>
+        );
+    }
+
     return (
-        <div className="h-full w-full pr-2 pt-3">
+        <div className="h-full w-full pr-0 sm:pr-2 pt-3 overflow-x-auto">
             {topBar}
-            <Table
-                isHeaderSticky
-                aria-label="Example table with custom cells, pagination and sorting"
-                bottomContent={bottomContent}
-                bottomContentPlacement="outside"
-                classNames={{
-                    td: "before:bg-transparent",
-                }}
-                selectedKeys={filterSelectedKeys}
-                selectionMode="multiple"
-                sortDescriptor={sortDescriptor}
-                topContent={topContent}
-                topContentPlacement="outside"
-                onSelectionChange={onSelectionChange}
-                onSortChange={setSortDescriptor}
-            >
+            <div className="min-w-[800px]">
+                <Table
+                    isHeaderSticky
+                    aria-label="Example table with custom cells, pagination and sorting"
+                    bottomContent={bottomContent}
+                    bottomContentPlacement="outside"
+                    classNames={{
+                        td: "before:bg-transparent",
+                        wrapper: "overflow-x-auto",
+                    }}
+                    selectedKeys={filterSelectedKeys}
+                    selectionMode="multiple"
+                    sortDescriptor={sortDescriptor}
+                    topContent={topContent}
+                    topContentPlacement="outside"
+                    onSelectionChange={onSelectionChange}
+                    onSortChange={setSortDescriptor}
+                >
                 <TableHeader columns={headerColumns}>
                     {(column) => (
                         <TableColumn
@@ -1020,6 +1057,7 @@ export default function StudentTable() {
                     )}
                 </TableBody>
             </Table>
+            </div>
         </div>
     );
 }

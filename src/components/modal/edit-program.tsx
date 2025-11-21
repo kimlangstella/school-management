@@ -70,7 +70,7 @@ console.log("formdata",formData)
 
   return (
     <Modal isOpen={isOpen} onOpenChange={onOpenChange} placement="top-center">
-      <ModalContent className="dark text-foreground bg-background w-[500px] max-w-full p-3">
+      <ModalContent className="dark text-foreground bg-background w-full sm:w-[500px] max-w-full p-2 sm:p-3">
         {(modalClose) => (
           <>
             <ModalBody>

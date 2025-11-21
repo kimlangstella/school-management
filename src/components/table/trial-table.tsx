@@ -65,6 +65,7 @@ type Branch = {
 };
 
 export default function StudentTable() {
+    const supabase = createClient();
     // Removed unused state (error, programs, users)
 
     const [filterValue, setFilterValue] = useState("");
@@ -689,9 +690,9 @@ export default function StudentTable() {
 
     const topBar = useMemo(() => {
         return (
-            <div className="mb-[18px] flex items-center justify-between">
-                <div className="flex w-[226px] items-center gap-2">
-                    <h1 className="text-2xl font-[700] leading-[32px]">Trials</h1>
+            <div className="mb-4 sm:mb-[18px] flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+                <div className="flex items-center gap-2">
+                    <h1 className="text-xl sm:text-2xl font-[700] leading-[32px]">Trials</h1>
                     <Chip
                         className="hidden items-center text-default-500 sm:flex"
                         size="sm"
@@ -755,9 +756,10 @@ export default function StudentTable() {
     ]);
 
     return (
-        <div className="h-full w-full pr-2 pt-3">
+        <div className="h-full w-full pr-0 sm:pr-2 pt-3 overflow-x-auto">
             {topBar}
-            <Table
+            <div className="min-w-[800px]">
+                <Table
                 isHeaderSticky
                 aria-label="Example table with custom cells, pagination and sorting"
                 bottomContent={bottomContent}
@@ -824,6 +826,7 @@ export default function StudentTable() {
                     )}
                 </TableBody>
             </Table>
+            </div>
 
             {editingTrial && (
                 <TrailFormModal

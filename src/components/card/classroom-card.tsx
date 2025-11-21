@@ -206,13 +206,13 @@ export default function ClassroomCard() {
 
     return (
         <>
-            <div className="mb-4 flex flex-wrap items-end gap-3">
-                <div className="flex flex-col">
+            <div className="mb-4 flex flex-col sm:flex-row flex-wrap items-stretch sm:items-end gap-3">
+                <div className="flex flex-col w-full sm:w-auto">
                     <label className="mb-1 text-xs font-semibold text-gray-400">Branch</label>
                     <select
                         value={branchId}
                         onChange={(e) => { setBranchId(e.target.value); setProgramId(""); }}
-                        className="h-9 w-[220px] rounded-lg border border-default-200 bg-default-100 px-3 text-sm outline-none focus:ring-2 focus:ring-primary"
+                        className="h-9 w-full sm:w-[220px] rounded-lg border border-default-200 bg-default-100 px-3 text-sm outline-none focus:ring-2 focus:ring-primary"
                     >
                         <option value="">All Branches</option>
                         {branches.map((b) => (
@@ -221,12 +221,12 @@ export default function ClassroomCard() {
                     </select>
                 </div>
 
-                <div className="flex flex-col">
+                <div className="flex flex-col w-full sm:w-auto">
                     <label className="mb-1 text-xs font-semibold text-gray-400">Program</label>
                     <select
                         value={programId}
                         onChange={(e) => setProgramId(e.target.value)}
-                        className="h-9 w-[220px] rounded-lg border border-default-200 bg-default-100 px-3 text-sm outline-none focus:ring-2 focus:ring-primary"
+                        className="h-9 w-full sm:w-[220px] rounded-lg border border-default-200 bg-default-100 px-3 text-sm outline-none focus:ring-2 focus:ring-primary"
                     >
                         <option value="">All Programs</option>
                         {programsInBranch.map((p) => (
@@ -235,27 +235,27 @@ export default function ClassroomCard() {
                     </select>
                 </div>
 
-                <div className="flex flex-col">
+                <div className="flex flex-col w-full sm:w-auto">
                     <label className="mb-1 text-xs font-semibold text-gray-400">Search</label>
                     <input
                         value={query}
                         onChange={(e) => setQuery(e.target.value)}
                         placeholder="Classroom name…"
-                        className="h-9 w-[220px] rounded-lg border border-default-200 bg-default-100 px-3 text-sm outline-none focus:ring-2 focus:ring-primary"
+                        className="h-9 w-full sm:w-[220px] rounded-lg border border-default-200 bg-default-100 px-3 text-sm outline-none focus:ring-2 focus:ring-primary"
                     />
                 </div>
             </div>
             {visibleClassrooms.length === 0 ? (
-                <p className="text-default-500">No classrooms match your filters.</p>
+                <p className="text-default-500 text-sm">No classrooms match your filters.</p>
             ) : (
-                <div className="grid grid-cols-12 gap-6">
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 sm:gap-6">
                     {visibleClassrooms.map((cls) => {
                         const studentCount = (counts as Record<string, number>)[cls.id] ?? 0;
 
                         return (
                             <div
                                 key={cls.id}
-                                className="relative col-span-12 max-w-sm sm:col-span-6 lg:col-span-4 rounded-lg border p-4 shadow-lg"
+                                className="relative rounded-lg border p-4 shadow-lg"
                             >
                                 <div className="absolute right-2 top-2">
                                     <Dropdown>

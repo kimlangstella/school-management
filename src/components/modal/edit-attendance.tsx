@@ -41,6 +41,7 @@ export default function EditAttendanceModal({
                                                 record,
                                                 onSuccess,
                                             }: Props) {
+    const supabase = createClient();
     // FIX: Added generic types to useState to avoid 'never' type issues
     const [students, setStudents] = useState<Student[]>([]);
     const [programs, setPrograms] = useState<Program[]>([]);
@@ -110,7 +111,7 @@ export default function EditAttendanceModal({
 
     return (
         <Modal isOpen={isOpen} onOpenChange={onOpenChange} placement="top-center">
-            <ModalContent className="dark text-foreground bg-background w-[500px] max-w-full p-3">
+            <ModalContent className="dark text-foreground bg-background w-full sm:w-[500px] max-w-full p-2 sm:p-3">
                 {(onClose) => (
                     <>
                         <ModalBody>

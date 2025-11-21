@@ -163,10 +163,10 @@ export default function TrailFormModal({
 
   return (
     <Modal isOpen={isOpen} onOpenChange={onClose} placement="top-center">
-      <ModalContent className="dark text-foreground bg-background w-full max-w-lg p-5">
+      <ModalContent className="dark text-foreground bg-background w-full max-w-lg p-3 sm:p-5">
         <ModalBody className="space-y-4">
           <h2 className="text-xl font-semibold">Update Trial</h2>
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <Input
               name="client"
               label="Client"

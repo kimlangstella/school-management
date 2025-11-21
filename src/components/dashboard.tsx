@@ -71,13 +71,28 @@ const supabase = createClient();
     fetchUser();
   }, []);
 
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+
   return (
-    <div className="dark text-foreground bg-background flex h-full w-full">
+    <div className="dark text-foreground bg-background flex h-full w-full relative">
+      {/* Mobile Overlay */}
+      {isMobile && isSidebarOpen && (
+        <div
+          className="fixed inset-0 bg-black/50 z-40"
+          onClick={() => setIsSidebarOpen(false)}
+        />
+      )}
+
+      {/* Sidebar */}
       <div
         className={cn(
-          "dark text-foreground bg-background relative flex h-full w-60 flex-col !border-r-small border-divider p-6 transition-width",
+          "dark text-foreground bg-background relative flex h-full w-60 flex-col !border-r-small border-divider p-6 transition-all duration-300 z-50",
           {
-            "w-16 items-center px-2 py-6": isCompact,
+            "w-16 items-center px-2 py-6": isCompact && !isMobile,
+            // Mobile: hidden by default, show as overlay when open
+            "fixed left-0 top-0 h-full": isMobile,
+            "-translate-x-full": isMobile && !isSidebarOpen,
+            "translate-x-0": isMobile && isSidebarOpen,
           }
         )}
       >
@@ -154,9 +169,20 @@ const supabase = createClient();
       </div>
 
       <div className="w-full flex-1 flex-col flex h-screen overflow-hidden">
-        <header className="flex items-center justify-between rounded-medium border-small border-divider p-4 mt-2">
-          <div className="flex items-center gap-3">
-            <Button isIconOnly size="sm" variant="light" onPress={onToggle}>
+        <header className="flex items-center justify-between rounded-medium border-small border-divider p-2 sm:p-4 mt-2">
+          <div className="flex items-center gap-2 sm:gap-3">
+            <Button 
+              isIconOnly 
+              size="sm" 
+              variant="light" 
+              onPress={() => {
+                if (isMobile) {
+                  setIsSidebarOpen(!isSidebarOpen);
+                } else {
+                  onToggle();
+                }
+              }}
+            >
               <Icon
                 className="text-default-500"
                 height={24}
@@ -164,12 +190,12 @@ const supabase = createClient();
                 width={24}
               />
             </Button>
-            <h2 className="text-medium font-medium text-default-700">
+            <h2 className="text-sm sm:text-medium font-medium text-default-700">
               Overview
             </h2>
           </div>
 
-          <div className="flex items-center gap-3 px-3">
+          <div className="flex items-center gap-2 sm:gap-3 px-1 sm:px-3">
             <Avatar
               isBordered
               className="flex-none"
@@ -177,7 +203,9 @@ const supabase = createClient();
               src={userInfo?.profile_url || "/default-avatar.png"}
             />
             <div
-              className={cn("flex max-w-full flex-col", { hidden: isCompact })}
+              className={cn("flex max-w-full flex-col", { 
+                hidden: isCompact || isMobile 
+              })}
             >
               <p className="truncate text-small font-medium text-default-600 capitalize">
                 {userInfo?.name || "Loading..."}
@@ -187,7 +215,7 @@ const supabase = createClient();
         </header>
 
         <main className="w-full h-screen overflow-hidden">
-          <div className="flex w-full h-full overflow-auto flex-col">
+          <div className="flex w-full h-full overflow-auto flex-col p-2 sm:p-4">
             {children}
           </div>
         </main>

@@ -13,6 +13,18 @@ const nextConfig: NextConfig = {
         // your project has type errors.
         ignoreBuildErrors: true,
     },
+    images: {
+        remotePatterns: [
+            {
+                protocol: 'https',
+                hostname: '**.supabase.co',
+            },
+            {
+                protocol: 'https',
+                hostname: 'flagcdn.com',
+            },
+        ],
+    },
 };
 
 export default nextConfig;

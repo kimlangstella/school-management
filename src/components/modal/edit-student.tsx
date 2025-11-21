@@ -13,7 +13,7 @@ import {
   ModalContent,
   useDisclosure,
 } from "@heroui/react";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useMemo } from "react";
 import { createClient } from "../../../lib/supabaseClient";
 import { Student } from "@/components/types/columns";
 import nationalities from "@/components/types/nationalities";
@@ -57,9 +57,7 @@ const supabase = createClient();
   const [selectedBranchId, setSelectedBranchId] = useState<string | null>(
     student.branch_id ?? null
   );
-  const [selectedModifiedBy, setSelectedModifiedBy] = useState<string | null>(
-    student.modified_by ?? null
-  );
+  const [currentUserId, setCurrentUserId] = useState<string | null>(null);
   const nationalityCode = nationalities.find(
     (n) => n.name === student.nationality
   )?.code;
@@ -68,13 +66,19 @@ const supabase = createClient();
   >(nationalityCode);
   const [selectedProgramIds, setSelectedProgramIds] = useState<string[]>([]);
   const [paymentStatus, setPaymentStatus] = useState(
-    student.payment_status ?? "unpaid"
+    (student as any).payment_status ?? "unpaid"
   );
-  const [paymentNote, setPaymentNote] = useState(student.payment_note ?? "");
+  const [paymentNote, setPaymentNote] = useState((student as any).payment_note ?? "");
 
-  // Load dropdown data
+  // Load dropdown data and get current user
   useEffect(() => {
     const fetchData = async () => {
+      // Get current authenticated user
+      const { data: { user } } = await supabase.auth.getUser();
+      if (user) {
+        setCurrentUserId(user.id);
+      }
+
       const [{ data: branchData }, { data: programData }, { data: userList }] =
         await Promise.all([
           supabase.rpc("get_all_branches"),
@@ -85,33 +89,132 @@ const supabase = createClient();
       if (branchData) setBranches(branchData);
       if (userList) setUsers(userList);
       if (programData) setPrograms(programData);
-      if (student.programs && Array.isArray(student.programs)) {
-        const ids = student.programs.map((p) => p.id);
-        setSelectedProgramIds(ids);
-      }
     };
     fetchData();
   }, []);
-useEffect(() => {
-  if (isOpen && student?.program_names?.length && programs.length) {
-    const ids = programs
-      .filter((p) =>
-        student.program_names.includes(p.name)
-      )
-      .map((p) => String(p.id));
-    setSelectedProgramIds(ids);}
 
-}, [isOpen, student, programs]);
-const filteredPrograms = programs.filter(
-  (p) =>
-    !selectedBranchId ||
-    p.branch_id === selectedBranchId ||
-    selectedProgramIds.includes(p.id) // ✅ Always include old selections
-);
+  // Initialize selected programs when modal opens
+  // Only include programs that match the selected branch (if branch is selected)
+  useEffect(() => {
+    if (isOpen && programs.length > 0) {
+      let ids: string[] = [];
+      
+      // Try to get program IDs from student.programs first (array of objects with id)
+      if (student.programs && Array.isArray(student.programs) && student.programs.length > 0) {
+        ids = student.programs.map((p: any) => String(p.id || p));
+        console.log("🔍 Initializing from student.programs:", ids, student.programs);
+      } 
+      // Fallback to program_names if programs array is not available
+      else if ((student as any)?.program_names?.length && programs.length) {
+        ids = programs
+          .filter((p) => (student as any).program_names?.includes(p.name))
+          .map((p) => String(p.id));
+        console.log("🔍 Initializing from program_names:", ids, (student as any).program_names);
+      }
+      
+      // Filter to only include programs from the selected branch (if branch is selected)
+      if (selectedBranchId && ids.length > 0) {
+        const branchFilteredIds = ids.filter((id) => {
+          const program = programs.find((p) => String(p.id) === id);
+          return program && String(program.branch_id) === String(selectedBranchId);
+        });
+        console.log("🔍 Filtered by branch:", {
+          original: ids,
+          branch: selectedBranchId,
+          filtered: branchFilteredIds
+        });
+        ids = branchFilteredIds;
+      }
+      
+      // Only update if we found IDs and they're different from current selection
+      if (ids.length > 0) {
+        const currentIdsStr = selectedProgramIds.map(String).sort().join(',');
+        const newIdsStr = ids.map(String).sort().join(',');
+        if (currentIdsStr !== newIdsStr) {
+          setSelectedProgramIds(ids);
+        }
+      } else if (selectedProgramIds.length > 0 && selectedBranchId) {
+        // If branch is selected but no programs found for that branch, clear selections
+        setSelectedProgramIds([]);
+      }
+    }
+  }, [isOpen, student, programs, selectedBranchId]);
 
-const uniquePrograms = Array.from(
-  new Map(filteredPrograms.map((p) => [p.name, p])).values()
-);
+  // When branch changes, filter selected programs to only those from the new branch
+  useEffect(() => {
+    if (selectedBranchId && selectedProgramIds.length > 0 && programs.length > 0) {
+      const branchFilteredIds = selectedProgramIds.filter((id) => {
+        const program = programs.find((p) => String(p.id) === id);
+        return program && String(program.branch_id) === String(selectedBranchId);
+      });
+      
+      if (branchFilteredIds.length !== selectedProgramIds.length) {
+        console.log("🔄 Branch changed - filtering selected programs:", {
+          before: selectedProgramIds,
+          after: branchFilteredIds,
+          branch: selectedBranchId
+        });
+        setSelectedProgramIds(branchFilteredIds);
+      }
+    }
+  }, [selectedBranchId]); // Only run when branch changes
+
+  // Filter programs: ONLY show programs from the selected branch
+  // If branch is selected, filter strictly by branch_id
+  const filteredPrograms = useMemo(() => {
+    if (!selectedBranchId) {
+      // If no branch selected, show all programs
+      return programs;
+    }
+    
+    // Only show programs from the selected branch
+    return programs.filter((p) => {
+      return String(p.branch_id) === String(selectedBranchId);
+    });
+  }, [programs, selectedBranchId]);
+
+  // Deduplicate programs by name within the selected branch
+  // If multiple programs have the same name in the same branch, keep only one (prefer selected ones)
+  const uniquePrograms = useMemo(() => {
+    const programMap = new Map<string, Program>();
+    
+    filteredPrograms.forEach((p) => {
+      const id = String(p.id);
+      const name = p.name.trim().toLowerCase(); // Normalize name for comparison
+      const branchId = String(p.branch_id);
+      
+      // Create a unique key: branch_id + normalized name
+      const key = `${branchId}_${name}`;
+      
+      if (!programMap.has(key)) {
+        // First time seeing this branch+name combination
+        programMap.set(key, p);
+      } else {
+        // Duplicate found - prefer the one that's already selected
+        const existing = programMap.get(key);
+        const existingId = existing ? String(existing.id) : '';
+        const isCurrentSelected = selectedProgramIds.includes(id);
+        const isExistingSelected = selectedProgramIds.includes(existingId);
+        
+        // Replace with current if: current is selected and existing is not
+        // OR if neither is selected, keep the first one (existing)
+        if (isCurrentSelected && !isExistingSelected) {
+          programMap.set(key, p);
+        }
+        // Otherwise keep the existing one
+      }
+    });
+    
+    const result = Array.from(programMap.values());
+    console.log("🔍 Deduplicated programs:", result.map(p => ({
+      id: p.id,
+      name: p.name,
+      branch: p.branch_name,
+      branch_id: p.branch_id
+    })));
+    
+    return result;
+  }, [filteredPrograms, selectedProgramIds]);
 
 
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
@@ -142,10 +245,13 @@ const uniquePrograms = Array.from(
         .getPublicUrl(filePath);
       imageUrl = publicUrl?.publicUrl ?? imageUrl;
     }
-    const finalProgramIds =
-      selectedProgramIds.length > 0
-        ? selectedProgramIds
-        : student.programs?.map((p) => String(p.id)) || [];
+    // Always use selectedProgramIds - if empty, it means user wants to remove all programs
+    const finalProgramIds = selectedProgramIds;
+    
+    console.log("🔍 Debug - Selected Program IDs:", selectedProgramIds);
+    console.log("🔍 Debug - Final Program IDs:", finalProgramIds);
+    console.log("🔍 Debug - Original Student Programs:", student.programs);
+    
     const payload = {
       _id: String(student.id),
       _first_name: formData.get("first_name")?.toString() || "",
@@ -170,26 +276,35 @@ const uniquePrograms = Array.from(
       _image_url: imageUrl,
       _insurance_number: formData.get("insurance_number")?.toString() || "",
       _insurance_expiry: formData.get("insurance_expiry_date") || null,
-      _modified_by: selectedModifiedBy || null,
+      _modified_by: currentUserId || null,
       _program_ids: finalProgramIds,
       _payment_status: paymentStatus,
       _payment_note: paymentNote,
       _payment_end_date: formData.get("payment_end_date") || null,
     };
 
-    const { error: updateError } = await supabase.rpc(
+    console.log("📤 Submitting update payload:", payload);
+    console.log("📤 Program IDs being sent:", payload._program_ids);
+    
+    const { error: updateError, data: updateData } = await supabase.rpc(
       "update_student",
       payload
     );
 
     if (updateError) {
-      console.error("❌ Update failed:", updateError.message);
+      console.error("❌ Update failed:", updateError);
       setError("Update failed: " + updateError.message);
       return;
     }
 
-    onUpdate({ ...student, ...payload });
+    console.log("✅ Update successful:", updateData);
+    
+    // Close modal first
     onOpenChange();
+    
+    // Call onUpdate callback to invalidate queries and refresh the table
+    // This should be called after closing to ensure UI updates properly
+    onUpdate(student);
   };
 
   return (
@@ -204,11 +319,20 @@ const uniquePrograms = Array.from(
         </Button>
       )}
 
-      <Modal isOpen={isOpen} placement="top-center" onOpenChange={onOpenChange}>
-        <ModalContent className="dark text-foreground bg-background w-[1000px] max-w-full p-3">
+      <Modal 
+        isOpen={isOpen} 
+        placement="top-center" 
+        onOpenChange={onOpenChange}
+        scrollBehavior="inside"
+        size="full"
+        classNames={{
+          base: "max-w-[1000px]",
+        }}
+      >
+        <ModalContent className="dark text-foreground bg-background w-full sm:w-[1000px] max-w-full p-2 sm:p-3">
           <ModalBody>
             <form onSubmit={handleSubmit}>
-              <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
+              <div className="grid grid-cols-1 gap-3 sm:gap-4 sm:grid-cols-2 lg:grid-cols-3">
                 <Input
                   name="first_name"
                   isRequired
@@ -336,53 +460,65 @@ const uniquePrograms = Array.from(
       <label className="block mb-1 text-sm">
         Programs<span className="text-red-500">*</span>
       </label>
-      <div className="w-full max-w-[400px] border px-2 py-2 rounded-xl border-default-200 dark:border-default-100">
-<Listbox
-  classNames={{
-    base: "max-w-full",
-    list: "max-h-[150px] overflow-y-auto",
-  }}
-  selectedKeys={new Set(selectedProgramIds)}
-  items={uniquePrograms}
-  selectionMode="multiple"
-  variant="flat"
-  onSelectionChange={(keys) => {
-    if (keys instanceof Set) {
-      setSelectedProgramIds(Array.from(keys).map(String));
-    }
-  }}
->
-  {(program: Program) => (
-    <ListboxItem key={program.id} textValue={program.name}>
-      <div className="flex flex-col">
-        <span className="text-small font-medium">
-          {program.name}
-        </span>
-        <span className="text-tiny text-default-400">
-          {program.branch_name}
-        </span>
-      </div>
-    </ListboxItem>
-  )}
-</Listbox>
-
-      </div>
+      {!selectedBranchId ? (
+        <div className="w-full max-w-[400px] border px-4 py-8 rounded-xl border-default-200 dark:border-default-100 flex items-center justify-center">
+          <p className="text-sm text-default-500 text-center">
+            Please select a branch first to view available programs
+          </p>
+        </div>
+      ) : (
+        <div className="w-full max-w-[400px] border px-2 py-2 rounded-xl border-default-200 dark:border-default-100">
+          <Listbox
+            classNames={{
+              base: "max-w-full",
+              list: "max-h-[150px] overflow-y-auto",
+            }}
+            selectedKeys={new Set(selectedProgramIds)}
+            items={uniquePrograms}
+            selectionMode="multiple"
+            variant="flat"
+            onSelectionChange={(keys) => {
+              if (keys === "all") {
+                // If all selected, get all program IDs
+                const allIds = uniquePrograms.map((p) => String(p.id));
+                console.log("🔄 All programs selected:", allIds);
+                setSelectedProgramIds(allIds);
+              } else if (keys instanceof Set) {
+                const newIds = Array.from(keys).map(String);
+                console.log("🔄 Program selection changed:", newIds, "from keys:", Array.from(keys));
+                setSelectedProgramIds(newIds);
+              } else {
+                console.log("🔄 Program selection cleared");
+                setSelectedProgramIds([]);
+              }
+            }}
+          >
+            {(program: Program) => (
+              <ListboxItem key={program.id} textValue={program.name}>
+                <div className="flex flex-col">
+                  <span className="text-small font-medium">
+                    {program.name}
+                  </span>
+                  <span className="text-tiny text-default-400">
+                    {program.branch_name}
+                  </span>
+                </div>
+              </ListboxItem>
+            )}
+          </Listbox>
+        </div>
+      )}
     </div>
-                <Autocomplete
-                  name="modified_by"
-                  label="Modified By"
-                  selectedKey={selectedModifiedBy ?? undefined}
-                  onSelectionChange={(key) =>
-                    setSelectedModifiedBy(key?.toString() ?? null)
-                  }
-                  items={users}
-                >
-                  {(user) => (
-                    <AutocompleteItem key={user.id}>
-                      {user.name}
-                    </AutocompleteItem>
-                  )}
-                </Autocomplete>
+                {/* Modified By is automatically set to current user - hidden field */}
+                {currentUserId && (
+                  <Input
+                    name="modified_by"
+                    label="Modified By"
+                    value={users.find(u => u.id === currentUserId)?.name || "Current User"}
+                    isReadOnly
+                    isDisabled
+                  />
+                )}
 
                 <Autocomplete
                   name="status"
@@ -426,13 +562,12 @@ const uniquePrograms = Array.from(
                   onChange={(e) => setPaymentNote(e.target.value)}
                 />
 
-                {/* <Input
-                  label="Payment Date"
+                <Input
+                  name="payment_end_date"
+                  label="Payment End Date"
                   type="date"
-                  placeholder="e.g., Paid on July 1, 2025"
-                  value={paymentDate}
-                  onChange={(e) => setPaymentDate(e.target.value)} // ✅ Correct setter
-                /> */}
+                  defaultValue={student.payment_end_date?.split("T")[0]}
+                />
 
                 {student.image_url && (
                   <div className="col-span-3">
@@ -442,6 +577,8 @@ const uniquePrograms = Array.from(
                     <Image
                       src={student.image_url}
                       alt="Student"
+                      width={96}
+                      height={96}
                       className="h-24 w-24 object-cover rounded"
                     />
                   </div>

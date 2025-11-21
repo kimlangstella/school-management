@@ -1,7 +1,9 @@
 'use client';
 
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { supabase } from '../../../lib/supabaseClient';
+import { createClient } from '../../../lib/supabaseClient';
+
+const supabase = createClient();
 import {
     Table,
     TableHeader,
@@ -204,11 +206,11 @@ export default function AttendanceTable({ selectedBranchId, selectedProgramId }:
 
     /* ------------------------- UI ------------------------- */
     return (
-        <div className="p-4">
+        <div className="p-2 sm:p-4">
             {/* Toolbar */}
-            <div className="mb-4 flex flex-wrap items-end gap-3 sm:gap-4">
+            <div className="mb-4 flex flex-col sm:flex-row flex-wrap items-stretch sm:items-end gap-3 sm:gap-4">
                 {/* Search */}
-                <div className="flex flex-col">
+                <div className="flex flex-col w-full sm:w-auto">
                     <label className="mb-1 text-xs font-semibold text-gray-400">Search student</label>
                     <Input
                         aria-label="Search student"
@@ -221,21 +223,21 @@ export default function AttendanceTable({ selectedBranchId, selectedProgramId }:
                         endContent={<Icon icon="solar:magnifer-linear" className="text-default-400" width={16} />}
                         classNames={{
                             inputWrapper:
-                                'h-8 w-full max-w-[240px] rounded-lg bg-default-100 border border-default-200 data-[hover=true]:bg-default-100',
+                                'h-8 w-full sm:max-w-[240px] rounded-lg bg-default-100 border border-default-200 data-[hover=true]:bg-default-100',
                             input: 'text-sm placeholder-default-500',
                         }}
                     />
                 </div>
 
                 {/* Date + Today/Clear */}
-                <div className="flex flex-col">
+                <div className="flex flex-col w-full sm:w-auto">
                     <label className="mb-1 text-xs font-semibold text-gray-400">Date</label>
                     <div className="flex items-center gap-2">
                         <input
                             type="date"
                             value={selectedDate}
                             onChange={(e) => setSelectedDate(e.target.value)}
-                            className="h-8 w-full max-w-[180px] rounded-lg border border-default-200 bg-default-100 px-3 text-sm outline-none focus:ring-2 focus:ring-primary"
+                            className="h-8 w-full sm:max-w-[180px] rounded-lg border border-default-200 bg-default-100 px-3 text-sm outline-none focus:ring-2 focus:ring-primary"
                         />
                         <Button
                             size="sm"
@@ -260,12 +262,12 @@ export default function AttendanceTable({ selectedBranchId, selectedProgramId }:
                 </div>
 
                 {/* Classroom filter */}
-                <div className="flex flex-col">
+                <div className="flex flex-col w-full sm:w-auto">
                     <label className="mb-1 text-xs font-semibold text-gray-400">Classroom</label>
                     <select
                         value={selectedClassroomId}
                         onChange={(e) => setSelectedClassroomId(e.target.value)}
-                        className="h-8 w-full max-w-[220px] rounded-lg border border-default-200 bg-default-100 px-3 text-sm outline-none focus:ring-2 focus:ring-primary"
+                        className="h-8 w-full sm:max-w-[220px] rounded-lg border border-default-200 bg-default-100 px-3 text-sm outline-none focus:ring-2 focus:ring-primary"
                     >
                         <option value="">All Classrooms</option>
                         {classroomOptions.map((c) => (
@@ -277,24 +279,28 @@ export default function AttendanceTable({ selectedBranchId, selectedProgramId }:
                 </div>
 
                 {/* Spacer + Add button */}
-                <div className="grow" />
-                <Button color="primary" size="sm" onPress={() => setAddOpen(true)}>
-                    <Icon icon="solar:add-circle-bold" width={18} className="mr-1" />
-                    Add Attendance
-                </Button>
-                <Button
-                    color="secondary"
-                    size="sm"
-                    onPress={() => generateAttendancePDF(filteredRecords, branches)}
-                >
-                    Download Attendance PDF
-                </Button>
+                <div className="hidden sm:block grow" />
+                <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
+                    <Button color="primary" size="sm" onPress={() => setAddOpen(true)} className="w-full sm:w-auto">
+                        <Icon icon="solar:add-circle-bold" width={18} className="mr-1" />
+                        Add Attendance
+                    </Button>
+                    <Button
+                        color="secondary"
+                        size="sm"
+                        onPress={() => generateAttendancePDF(filteredRecords, branches)}
+                        className="w-full sm:w-auto"
+                    >
+                        Download Attendance PDF
+                    </Button>
+                </div>
 
             </div>
 
-            {error && <p className="mb-4 text-red-500">{error}</p>}
+            {error && <p className="mb-4 text-red-500 text-sm">{error}</p>}
 
-            <Table isStriped isCompact aria-label="Student Attendance Table">
+            <div className="overflow-x-auto">
+                <Table isStriped isCompact aria-label="Student Attendance Table" className="min-w-[700px]">
                 <TableHeader>
                     <TableColumn>#</TableColumn>
                     <TableColumn>Student</TableColumn>
@@ -329,6 +335,7 @@ export default function AttendanceTable({ selectedBranchId, selectedProgramId }:
                     ))}
                 </TableBody>
             </Table>
+            </div>
 
             {/* Add new attendance */}
             <AddAttendanceModal

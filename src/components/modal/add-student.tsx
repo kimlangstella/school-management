@@ -20,6 +20,7 @@ type AddStudentProps = { onUpdate: () => void; };
 
 export default function AddStudent({ onUpdate }: AddStudentProps) {
     const { isOpen, onOpen, onOpenChange } = useDisclosure();
+    const supabase = createClient();
 
     // NEW: confirm dialog handling
     const confirm = useDisclosure();
@@ -180,11 +181,20 @@ export default function AddStudent({ onUpdate }: AddStudentProps) {
                 Add Student
             </Button>
 
-            <Modal isOpen={isOpen} placement="top-center" onOpenChange={onOpenChange}>
-                <ModalContent className="dark text-foreground bg-background w-[1000px] max-w-full p-3">
+            <Modal 
+                isOpen={isOpen} 
+                placement="top-center" 
+                onOpenChange={onOpenChange}
+                scrollBehavior="inside"
+                size="full"
+                classNames={{
+                  base: "max-w-[1000px]",
+                }}
+            >
+                <ModalContent className="dark text-foreground bg-background w-full sm:w-[1000px] max-w-full p-2 sm:p-3">
                     <ModalBody>
                         <form onSubmit={handlePreSubmit}>
-                            <div className="grid grid-cols-1 gap-4 md:grid-cols-3 mb-4">
+                            <div className="grid grid-cols-1 gap-3 sm:gap-4 sm:grid-cols-2 lg:grid-cols-3 mb-4">
                                 <Input name="first_name" isRequired label="First Name" />
                                 <Input name="last_name" isRequired label="Last Name" />
                                 <Autocomplete name="gender" isRequired label="Gender">
@@ -223,6 +233,7 @@ export default function AddStudent({ onUpdate }: AddStudentProps) {
                                     onSelectionChange={(key) => {
                                         const id = key?.toString() ?? null;
                                         setSelectedBranchId(id);
+                                        // Clear selected programs when branch changes
                                         setSelectedPrograms([]);
                                     }}
                                     items={branches}
@@ -234,27 +245,35 @@ export default function AddStudent({ onUpdate }: AddStudentProps) {
                                     <label className="block mb-1 text-sm font-medium text-default-500">
                                         Programs<span className="text-red-500">*</span>
                                     </label>
-                                    <div className="w-full max-w-[400px] border px-2 py-2 rounded-xl border-default-200 dark:border-default-100">
-                                        <Listbox
-                                            classNames={{ base: "max-w-full", list: "max-h-[150px] overflow-y-auto" }}
-                                            selectedKeys={new Set(selectedPrograms)}
-                                            items={filteredPrograms}
-                                            label="Select Programs"
-                                            selectionMode="multiple"
-                                            variant="flat"
-                                            onSelectionChange={(keys) => {
-                                                if (keys instanceof Set) setSelectedPrograms([...keys].map((k) => k.toString()));
-                                            }}>
-                                            {(program: Program) => (
-                                                <ListboxItem key={program.id} textValue={program.name}>
-                                                    <div className="flex flex-col">
-                                                        <span className="text-small font-medium">{program.name}</span>
-                                                        <span className="text-tiny text-default-400">{program.branch_name}</span>
-                                                    </div>
-                                                </ListboxItem>
-                                            )}
-                                        </Listbox>
-                                    </div>
+                                    {!selectedBranchId ? (
+                                        <div className="w-full max-w-[400px] border px-4 py-8 rounded-xl border-default-200 dark:border-default-100 flex items-center justify-center">
+                                            <p className="text-sm text-default-500 text-center">
+                                                Please select a branch first to view available programs
+                                            </p>
+                                        </div>
+                                    ) : (
+                                        <div className="w-full max-w-[400px] border px-2 py-2 rounded-xl border-default-200 dark:border-default-100">
+                                            <Listbox
+                                                classNames={{ base: "max-w-full", list: "max-h-[150px] overflow-y-auto" }}
+                                                selectedKeys={new Set(selectedPrograms)}
+                                                items={filteredPrograms}
+                                                label="Select Programs"
+                                                selectionMode="multiple"
+                                                variant="flat"
+                                                onSelectionChange={(keys) => {
+                                                    if (keys instanceof Set) setSelectedPrograms([...keys].map((k) => k.toString()));
+                                                }}>
+                                                {(program: Program) => (
+                                                    <ListboxItem key={program.id} textValue={program.name}>
+                                                        <div className="flex flex-col">
+                                                            <span className="text-small font-medium">{program.name}</span>
+                                                            <span className="text-tiny text-default-400">{program.branch_name}</span>
+                                                        </div>
+                                                    </ListboxItem>
+                                                )}
+                                            </Listbox>
+                                        </div>
+                                    )}
                                 </div>
 
                                 <Autocomplete name="status" isRequired label="Status">
@@ -263,23 +282,24 @@ export default function AddStudent({ onUpdate }: AddStudentProps) {
                                     <AutocompleteItem startContent={DangerCircleSvg}>Inactive</AutocompleteItem>
                                 </Autocomplete>
 
-                                <Autocomplete
-                                    label="Created By"
-                                    isRequired
-                                    selectedKey={selectedCreatedBy ?? undefined}
-                                    onSelectionChange={(key) => key && setSelectedCreatedBy(String(key))}
-                                    items={users}>
-                                    {(user) => <AutocompleteItem key={user.id}>{user.name}</AutocompleteItem>}
-                                </Autocomplete>
+                                {/* Created By and Modified By are automatically set to current user - hidden fields */}
+                                {selectedCreatedBy && (
+                                    <Input
+                                        label="Created By"
+                                        value={users.find(u => u.id === selectedCreatedBy)?.name || "Current User"}
+                                        isReadOnly
+                                        isDisabled
+                                    />
+                                )}
 
-                                <Autocomplete
-                                    label="Modified By"
-                                    isRequired
-                                    selectedKey={selectedModifiedBy ?? undefined}
-                                    onSelectionChange={(key) => setSelectedModifiedBy(String(key))}
-                                    items={users}>
-                                    {(user) => <AutocompleteItem key={user.id}>{user.name}</AutocompleteItem>}
-                                </Autocomplete>
+                                {selectedModifiedBy && (
+                                    <Input
+                                        label="Modified By"
+                                        value={users.find(u => u.id === selectedModifiedBy)?.name || "Current User"}
+                                        isReadOnly
+                                        isDisabled
+                                    />
+                                )}
 
                                 <Autocomplete
                                     label="Payment Status"

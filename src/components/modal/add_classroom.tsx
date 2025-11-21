@@ -95,10 +95,10 @@ export default function AddClassroom({ onUpdate }: { onUpdate?: () => void }) {
       </Button>
 
       <Modal isOpen={isOpen} onOpenChange={onOpenChange} placement="top-center">
-        <ModalContent className="dark text-foreground bg-background w-[600px] max-w-full p-3">
+        <ModalContent className="dark text-foreground bg-background w-full sm:w-[600px] max-w-full p-2 sm:p-3">
           <ModalBody>
             <form onSubmit={handleSubmit}>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
                 <Autocomplete
                   label="Branch"
                   selectedKey={selectedBranchId ?? undefined}

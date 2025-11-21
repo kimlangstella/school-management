@@ -17,7 +17,9 @@ import {
 } from "@heroui/react";
 
 import { useEffect, useState, useCallback } from "react";
-import { supabase } from "../../../lib/supabaseClient";
+import { createClient } from "../../../lib/supabaseClient";
+
+const supabase = createClient();
 
 type Payment = {
     id: string;
@@ -159,22 +161,22 @@ export default function StudentPaymentsTable() {
     if (error) return <p className="text-red-600 text-center mt-6">{error}</p>;
 
     return (
-        <div className="max-w-6xl mx-auto mt-10 px-4">
+        <div className="max-w-6xl mx-auto mt-4 sm:mt-10 px-2 sm:px-4">
             <Card>
-                <CardBody>
-                    <div className="flex flex-col md:flex-row justify-between gap-4 mb-4">
+                <CardBody className="p-2 sm:p-4">
+                    <div className="flex flex-col sm:flex-row justify-between gap-4 mb-4">
                         <Input
                             type="text"
                             label="Search by student"
                             placeholder="Enter student name..."
                             value={search}
                             onChange={(e) => setSearch(e.target.value)}
-                            className="md:w-1/3"
+                            className="w-full sm:w-1/3"
                         />
 
                         <Select
                             label="Filter by status"
-                            className="md:w-1/4"
+                            className="w-full sm:w-1/4"
                             selectedKeys={[statusFilter]}
                             onChange={(e) => setStatusFilter(e.target.value)}
                         >
@@ -184,7 +186,8 @@ export default function StudentPaymentsTable() {
                         </Select>
                     </div>
 
-                    <Table isStriped isCompact aria-label="Student Payment Summary Table">
+                    <div className="overflow-x-auto">
+                        <Table isStriped isCompact aria-label="Student Payment Summary Table" className="min-w-[800px]">
                         <TableHeader>
                             <TableColumn>#</TableColumn>
                             <TableColumn>Student</TableColumn>
@@ -227,6 +230,7 @@ export default function StudentPaymentsTable() {
                             ))}
                         </TableBody>
                     </Table>
+                    </div>
                 </CardBody>
             </Card>
         </div>

@@ -142,11 +142,11 @@ const supabase = createClient();
       </Button>
 
       <Modal isOpen={isOpen} onOpenChange={onOpenChange} placement="top-center">
-        <ModalContent className="dark text-foreground bg-background w-full max-w-[1000px] p-6 rounded-xl">
+        <ModalContent className="dark text-foreground bg-background w-full max-w-[1000px] p-3 sm:p-6 rounded-xl">
           {(onClose) => (
             <>
               <ModalBody>
-                <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+                <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                   <Input
                     name="client"
                     isRequired

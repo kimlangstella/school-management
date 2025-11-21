@@ -250,7 +250,7 @@ function EnrollmentForm({ onClose }: { onClose: () => void }) {
     };
 
     return (
-        <div className="grid gap-6 md:grid-cols-2">
+        <div className="grid gap-6 sm:grid-cols-2">
             {/* Selectors */}
             <div className="space-y-4">
                 {/* Branch */}

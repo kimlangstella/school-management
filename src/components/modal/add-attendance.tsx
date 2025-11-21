@@ -341,7 +341,7 @@ export default function AddAttendanceModal({
 
     return (
         <Modal isOpen={isOpen} onOpenChange={onOpenChange} placement="top-center" scrollBehavior="inside">
-            <ModalContent className="dark text-foreground bg-background w-[1080px] max-w-[96vw] p-0">
+            <ModalContent className="dark text-foreground bg-background w-full sm:w-[1080px] max-w-[96vw] p-0">
                 {() => (
                     <>
                         {/* Header */}

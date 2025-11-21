@@ -49,20 +49,20 @@ export default function AttendancePage() {
     : [];
 
   return (
-    <div className="p-4">
+    <div className="p-2 sm:p-4">
       {/* Header */}
-      <div className="flex justify-between items-center mb-4">
-        <h1 className="text-3xl font-bold">📋 Student Attendance</h1>
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-4">
+        <h1 className="text-xl sm:text-2xl lg:text-3xl font-bold">📋 Student Attendance</h1>
        
       </div>
 
       {/* Filters */}
-      <div className="flex gap-4 mb-6">
+      <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 mb-4 sm:mb-6">
         {/* Branch Dropdown */}
-        <div>
+        <div className="w-full sm:w-auto">
           <Dropdown>
             <DropdownTrigger>
-              <Button variant="bordered" className="w-64 text-white">
+              <Button variant="bordered" className="w-full sm:w-64 text-white">
                 {branches.find((b) => b.id === selectedBranchId)?.name || 'All Branches'}
               </Button>
             </DropdownTrigger>
@@ -83,10 +83,10 @@ export default function AttendancePage() {
         </div>
 
         {/* Program Dropdown */}
-        <div>
+        <div className="w-full sm:w-auto">
           <Dropdown isDisabled={!selectedBranchId}>
             <DropdownTrigger>
-              <Button variant="bordered" className="w-64 text-white">
+              <Button variant="bordered" className="w-full sm:w-64 text-white">
                 {filteredPrograms.find((p) => p.id === selectedProgramId)?.name ||
                   'All Programs'}
               </Button>

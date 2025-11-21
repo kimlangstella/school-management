@@ -64,7 +64,7 @@ export default function AddProgram({ onSuccess }: { onSuccess?: () => void }) {
       </Button>
 
       <Modal isOpen={isOpen} onOpenChange={onOpenChange} placement="top-center">
-        <ModalContent className="dark text-foreground bg-background w-[500px] max-w-full p-3">
+        <ModalContent className="dark text-foreground bg-background w-full sm:w-[500px] max-w-full p-2 sm:p-3">
           {(onClose) => {
             const handleAdd = async () => {
               const { branch_id, name, description, age } = formData;
