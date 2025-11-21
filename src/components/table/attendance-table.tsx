@@ -1,7 +1,7 @@
 'use client';
 
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { createClient } from '../../../lib/supabaseClient';
+import { supabase } from '../../../lib/supabaseClient';
 import {
     Table,
     TableHeader,
@@ -52,7 +52,7 @@ export default function AttendanceTable({ selectedBranchId, selectedProgramId }:
     const [branches, setBranches] = useState<Branch[]>([]);
     const [programs, setPrograms] = useState<Program[]>([]);
     const [loading, setLoading] = useState(true);
-const supabase = createClient();
+
     // FIX: Removed unused edit state
     // const [editModalOpen, setEditModalOpen] = useState(false);
     // const [selectedRecord, setSelectedRecord] = useState<AttendanceRecord | null>(null);

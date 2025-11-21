@@ -80,7 +80,7 @@ export default function StudentTable() {
     );
     const [rowsPerPage] = useState(20);
     const [page, setPage] = useState(1);
-const supabase = createClient();
+
     const [sortDescriptor, setSortDescriptor] = useState<SortDescriptor>({
         column: "name",
         direction: "ascending",

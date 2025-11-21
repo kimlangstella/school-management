@@ -45,7 +45,7 @@ export default function EditAttendanceModal({
     const [students, setStudents] = useState<Student[]>([]);
     const [programs, setPrograms] = useState<Program[]>([]);
     const [branches, setBranches] = useState<Branch[]>([]);
-const supabase = createClient();
+
     const [form, setForm] = useState({
         student_id: '',
         program_id: '',

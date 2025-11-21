@@ -8,7 +8,7 @@ import {
   ModalContent,
   useDisclosure,
 } from '@heroui/react';
-import { createClient } from '../../../lib/supabaseClient';
+import { supabase } from '../../../lib/supabaseClient';
 
 type Exam = {
   id?: string;

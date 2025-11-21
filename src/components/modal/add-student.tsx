@@ -20,7 +20,8 @@ type AddStudentProps = { onUpdate: () => void; };
 
 export default function AddStudent({ onUpdate }: AddStudentProps) {
     const { isOpen, onOpen, onOpenChange } = useDisclosure();
-const supabase = createClient();
+
+    // NEW: confirm dialog handling
     const confirm = useDisclosure();
     const [pendingFormEl, setPendingFormEl] = useState<HTMLFormElement | null>(null);
     const [pendingName, setPendingName] = useState("");

@@ -66,7 +66,7 @@ type Branch = {
 
 export default function StudentTable() {
     // Removed unused state (error, programs, users)
-    const supabase = createClient();
+
     const [filterValue, setFilterValue] = useState("");
     const [selectedKeys, setSelectedKeys] = useState<Selection>(new Set([]));
     const [visibleColumns, setVisibleColumns] = useState<Selection>(
