@@ -1,7 +1,7 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { supabase } from '../../../lib/supabaseClient'
+import { createClient } from '../../../lib/supabaseClient'
 import CardAaa from '@/components/card/card-aaa'
 import AddExam from '@/components/modal/add-exam'
 import EditExamModal from '@/components/modal/edit-exam'
@@ -26,6 +26,7 @@ export default function ExamPage() {
   const [, setBranches] = useState<Branch[]>([])
   const [programs, setPrograms] = useState<Program[]>([])
   const [loading, setLoading] = useState(true)
+   const supabase = createClient();
 const [editExam, setEditExam] = useState<Exam | null>(null);
 useEffect(() => {
   const loadData = async () => {

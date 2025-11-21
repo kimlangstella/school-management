@@ -8,7 +8,7 @@ import {
   ModalContent,
   useDisclosure,
 } from '@heroui/react';
-import { supabase } from '../../../lib/supabaseClient';
+import { createClient } from '../../../lib/supabaseClient';
 
 type Exam = {
   id?: string;
@@ -53,8 +53,7 @@ export default function EditExamModal({
   const [branches, setBranches] = useState<Branch[]>([]);
   const [programs, setPrograms] = useState<Program[]>([]);
   const [message, setMessage] = useState('');
-
-  // Load branches and programs
+const supabase = createClient();
   useEffect(() => {
     fetchBranches();
     fetchPrograms();

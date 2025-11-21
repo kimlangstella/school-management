@@ -3,7 +3,6 @@
 import dynamic from "next/dynamic";
 import React, { Suspense } from "react";
 
-// Dynamically import the trial table
 const TrialTable = dynamic(() => import("@/components/table/trial-table"), {
   loading: () => <p className="p-8">Loading trials...</p>,
   ssr: false,

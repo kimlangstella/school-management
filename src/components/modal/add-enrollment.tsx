@@ -3,9 +3,8 @@
 import React, { useEffect, useMemo, useState } from "react";
 import { createPortal } from "react-dom";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { supabase } from "../../../lib/supabaseClient";
-
-/* ========== Reusable Modal (portal + ESC + overlay click) ========== */
+import { createClient } from "../../../lib/supabaseClient";
+const supabase = createClient();
 function Modal({
                    open,
                    onClose,

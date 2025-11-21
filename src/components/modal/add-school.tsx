@@ -8,7 +8,9 @@ import {
   Button,
   Input,
 } from '@heroui/react';
-import { supabase } from '../../../lib/supabaseClient';
+import { createClient } from '../../../lib/supabaseClient';
+
+const supabase = createClient();
 
 type Props = {
   isOpen: boolean;

@@ -8,7 +8,7 @@ import {
   Input,
   Button,
 } from '@heroui/react';
-import { supabase } from '../../../lib/supabaseClient';
+import { createClient } from '../../../lib/supabaseClient';
 
 type Props = {
   isOpen: boolean;
@@ -37,7 +37,7 @@ export default function EditSchoolModal({
     contact_info: '',
   });
   const [error, setError] = useState<string | null>(null);
-
+const supabase = createClient();
   useEffect(() => {
     if (school) {
       setForm({

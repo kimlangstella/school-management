@@ -9,7 +9,7 @@ import {
   Button,
   useDisclosure,
 } from '@heroui/react';
-import { supabase } from '../../../lib/supabaseClient';
+import { createClient } from '../../../lib/supabaseClient';
 
 type Course = {
   id: string;
@@ -31,7 +31,7 @@ export default function EditCourseModal({
   const { isOpen, onOpen, onOpenChange } = useDisclosure();
   const [formData, setFormData] = useState<Course>(course);
   const [error, setError] = useState<string | null>(null);
-
+  const supabase = createClient();
   useEffect(() => {
     if (course) {
       setFormData(course);

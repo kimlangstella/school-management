@@ -7,7 +7,7 @@ import {
   Button, Chip, Spinner, Checkbox,
 } from "@heroui/react";
 import { Icon } from "@iconify/react";
-import { supabase } from "../../../lib/supabaseClient";
+import { createClient } from "../../../lib/supabaseClient";
 
 type Classroom = { id: string; class_name: string };
 
@@ -38,7 +38,7 @@ export default function ManageStudentsModal({
 
   const [effectiveDate, setEffectiveDate] = useState<string>("");
   const [alsoDeleteAttendance, setAlsoDeleteAttendance] = useState(false);
-
+  const supabase = createClient();
   useEffect(() => {
     if (isOpen) {
       setEffectiveDate(new Date().toISOString().slice(0, 10));

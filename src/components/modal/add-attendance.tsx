@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { supabase } from "../../../lib/supabaseClient";
+import { createClient } from "../../../lib/supabaseClient";
 import {
     Button,
     Modal,
@@ -31,7 +31,7 @@ type MatrixRow = {
     s1: Status; s2: Status; s3: Status; s4: Status; s5: Status;
     s6: Status; s7: Status; s8: Status; s9: Status; s10: Status; s11: Status;
 };
-
+const supabase = createClient();
 const SESSIONS = Array.from({ length: 11 }, (_, i) => i + 1) as const;
 type SessionNo = (typeof SESSIONS)[number];
 

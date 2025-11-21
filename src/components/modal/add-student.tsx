@@ -10,7 +10,8 @@ import { DangerCircleSvg } from "@/components/icon/danger-circle";
 import { SuccessCircleSvg } from "@/components/icon/success-circle";
 import { WarningCircleSvg } from "@/components/icon/warning-circle";
 import React, { useEffect, useState } from "react";
-import { supabase } from "../../../lib/supabaseClient";
+import { createClient } from "../../../lib/supabaseClient";
+
 
 type BranchObject = { id: string; name: string; };
 type User = { id: string; name: string; };
@@ -19,8 +20,7 @@ type AddStudentProps = { onUpdate: () => void; };
 
 export default function AddStudent({ onUpdate }: AddStudentProps) {
     const { isOpen, onOpen, onOpenChange } = useDisclosure();
-
-    // NEW: confirm dialog handling
+const supabase = createClient();
     const confirm = useDisclosure();
     const [pendingFormEl, setPendingFormEl] = useState<HTMLFormElement | null>(null);
     const [pendingName, setPendingName] = useState("");

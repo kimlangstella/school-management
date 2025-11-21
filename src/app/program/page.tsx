@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { supabase } from '../../../lib/supabaseClient';
+import { createClient } from '../../../lib/supabaseClient';
 import CardAaa from '@/components/card/card-aaa';
 import AddProgram from '@/components/modal/add-program';
 import EditProgramModal from '@/components/modal/edit-program';
@@ -24,7 +24,7 @@ export default function ProgramPage() {
   const [selectedProgram, setSelectedProgram] = useState<Program | null>(null);
   const [branches, setBranches] = useState<Branch[]>([]);
   const [selectedBranch, setSelectedBranch] = useState<string | null>(null);
-
+ const supabase = createClient();
   const fetchPrograms = async () => {
     const { data, error } = await supabase.rpc('get_all_programs');
     console.log("data",data)

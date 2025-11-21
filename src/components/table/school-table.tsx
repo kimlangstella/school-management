@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { supabase } from '../../../lib/supabaseClient';
+import { createClient } from '../../../lib/supabaseClient';
 import {
   Table,
   TableHeader,
@@ -26,7 +26,7 @@ export default function SchoolTable() {
   const [error, setError] = useState<string | null>(null);
   const [editModalOpen, setEditModalOpen] = useState(false);
   const [selectedSchool, setSelectedSchool] = useState<School | null>(null);
-
+const supabase = createClient();
   const fetchSchools = async () => {
     const { data, error } = await supabase.rpc('get_all_schools');
     if (error) {
