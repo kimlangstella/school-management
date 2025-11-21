@@ -19,8 +19,8 @@ import { Student } from "@/components/types/columns";
 import nationalities from "@/components/types/nationalities";
 import { DangerCircleSvg } from "@/components/icon/danger-circle";
 import { SuccessCircleSvg } from "@/components/icon/success-circle";
-import { WarningCircleSvg } from "@/components/icon/warning-circle";
 import "react-datepicker/dist/react-datepicker.css";
+import Image from "next/image";
 
 type BranchObject = { id: string; name: string };
 type User = { id: string; name: string };
@@ -48,9 +48,9 @@ export default function EditStudent({
   const [programs, setPrograms] = useState<Program[]>([]);
   const [users, setUsers] = useState<User[]>([]);
   const [error, setError] = useState<string | null>(null);
-  const [paymentDate, setPaymentDate] = useState(
-    student.payment_end_date || ""
-  );
+  // const [paymentDate, setPaymentDate] = useState(
+  //   student.payment_end_date || ""
+  // );
 
   const [gender, setGender] = useState<string>(student.gender ?? "male");
   const [status, setStatus] = useState<string>(student.status ?? "active");
@@ -439,7 +439,7 @@ const uniquePrograms = Array.from(
                     <p className="text-sm text-default-500 mb-1">
                       Current Image
                     </p>
-                    <img
+                    <Image
                       src={student.image_url}
                       alt="Student"
                       className="h-24 w-24 object-cover rounded"

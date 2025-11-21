@@ -9,7 +9,6 @@ import {
   useDisclosure,
 } from '@heroui/react';
 import { supabase } from '../../../lib/supabaseClient';
-import { Icon } from '@iconify/react';
 
 type Exam = {
   id?: string;

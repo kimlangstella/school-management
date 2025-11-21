@@ -11,7 +11,6 @@ import {
   Modal,
   ModalBody,
   ModalContent,
-  Textarea,
 } from "@heroui/react";
 import { supabase } from "../../../lib/supabaseClient";
 
