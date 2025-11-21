@@ -10,7 +10,7 @@ import {
   useDisclosure,
 } from '@heroui/react';
 import { Icon } from '@iconify/react';
-import { supabase } from '../../../lib/supabaseClient';
+import { createClient } from '../../../lib/supabaseClient';
 
 type Branch = {
   id: string;
@@ -27,6 +27,7 @@ type Program = {
 export default function AddProgram({ onSuccess }: { onSuccess?: () => void }) {
   const { isOpen, onOpen, onOpenChange } = useDisclosure();
   const [branches, setBranches] = useState<Branch[]>([]);
+  const supabase = createClient();
   const [formData, setFormData] = useState<Program>({
     name: '',
     description: '',

@@ -17,7 +17,7 @@ import {
 } from "@heroui/react";
 
 import { useEffect, useState, useCallback } from "react";
-import { supabase } from "../../../lib/supabaseClient";
+import { createClient } from "../../../lib/supabaseClient";
 
 type Payment = {
     id: string;
@@ -71,7 +71,7 @@ export default function StudentPaymentsTable() {
     const [statusFilter, setStatusFilter] = useState("All");
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
-
+    const supabase = createClient();
     // Removed unused state 'editingPayment' which caused 'any' error
 
     useEffect(() => {

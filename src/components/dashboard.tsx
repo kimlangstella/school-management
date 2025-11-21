@@ -15,7 +15,7 @@ import Sidebar from "@/components/sidebar/sidebar";
 import { sectionItemsWithTeams } from "@/components/sidebar/sidebar-items";
 import { Icon } from "@iconify/react";
 import { useMediaQuery } from "usehooks-ts";
-import { supabase } from "../../lib/supabaseClient";
+import { createClient } from "../../lib/supabaseClient";
 import Image from "next/image";
 
 type UserObject = {
@@ -37,7 +37,7 @@ export default function DashboardLayout({
   const isMobile = useMediaQuery("(max-width: 768px)");
   const [userInfo, setUserInfo] = useState<UserObject | null>(null);
   const router = useRouter();
-
+const supabase = createClient();
   const isCompact = isCollapsed || isMobile;
 
   const onToggle = useCallback(() => {

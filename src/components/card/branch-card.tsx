@@ -2,7 +2,7 @@
 
 import React from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { supabase } from '../../../lib/supabaseClient';
+import { createClient } from '../../../lib/supabaseClient';
 
 import {
     ResponsiveContainer,
@@ -43,7 +43,7 @@ type CircleChartProps = {
     total: number;
 };
 
-// ✅ Extract queryFn to avoid recreation on rerenders
+const supabase = createClient();
 const fetchBranchesWithActiveStudents = async (): Promise<Branch[]> => {
     const [branchRes, studentRes] = await Promise.all([
         supabase.rpc('get_all_branches'),

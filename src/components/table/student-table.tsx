@@ -56,7 +56,7 @@ import {
     Student,
     statusPaid,
 } from "@/components/types/columns";
-import { supabase } from "../../../lib/supabaseClient";
+import { createClient } from "../../../lib/supabaseClient";
 import nationalities from "@/components/types/nationalities";
 import EditStudent from "../modal/edit-student";
 import { EditLinearIcon } from "../icon/edit";
@@ -80,7 +80,7 @@ export default function StudentTable() {
     );
     const [rowsPerPage] = useState(20);
     const [page, setPage] = useState(1);
-
+const supabase = createClient();
     const [sortDescriptor, setSortDescriptor] = useState<SortDescriptor>({
         column: "name",
         direction: "ascending",

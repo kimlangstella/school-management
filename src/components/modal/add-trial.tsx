@@ -15,7 +15,7 @@ import {
   useDisclosure,
 } from '@heroui/react';
 import { Icon } from '@iconify/react';
-import { supabase } from '../../../lib/supabaseClient';
+import { createClient } from '../../../lib/supabaseClient';
 import { WarningCircleSvg } from '../icon/warning-circle';
 import { DefaultCircleSvg } from '../icon/default-circle';
 import { DangerCircleSvg } from '../icon/danger-circle';
@@ -33,7 +33,7 @@ type Branch = { id: number; name: string };
 
 export default function AddTrail({ onSuccess }: { onSuccess?: () => void }) {
   const { isOpen, onOpen, onOpenChange } = useDisclosure();
-
+const supabase = createClient();
   const [programs, setPrograms] = useState<Program[]>([]);
   const [users, setUsers] = useState<User[]>([]);
   const [branches, setBranches] = useState<Branch[]>([]);

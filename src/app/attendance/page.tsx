@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import AttendanceTable from '@/components/table/attendance-table';
-import { supabase } from '../../../lib/supabaseClient';
+import { createClient } from '../../../lib/supabaseClient';
 import {
   Dropdown,
   DropdownTrigger,
@@ -29,7 +29,7 @@ export default function AttendancePage() {
 
   const [selectedBranchId, setSelectedBranchId] = useState('');
   const [selectedProgramId, setSelectedProgramId] = useState('');
-
+  const supabase = createClient();
   useEffect(() => {
     const fetchMeta = async () => {
       const [{ data: branchesData }, { data: programsData }] = await Promise.all([

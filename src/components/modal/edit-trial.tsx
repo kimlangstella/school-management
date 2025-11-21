@@ -12,7 +12,7 @@ import {
   ModalBody,
   ModalContent,
 } from "@heroui/react";
-import { supabase } from "../../../lib/supabaseClient";
+import { createClient } from "../../../lib/supabaseClient";
 
 type Program = { id: string; name: string; branch_id: string };
 type User = { id: string; name: string };
@@ -56,7 +56,7 @@ export default function TrailFormModal({
     branch: "",
     status: "pending",
   });
-
+  const supabase = createClient();
   const [programs, setPrograms] = useState<Program[]>([]);
   const [users, setUsers] = useState<User[]>([]);
   const [branches, setBranches] = useState<Branch[]>([]);

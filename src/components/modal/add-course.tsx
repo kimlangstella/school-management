@@ -10,7 +10,7 @@ import {
   useDisclosure,
 } from '@heroui/react';
 import { Icon } from '@iconify/react';
-import { supabase } from '../../../lib/supabaseClient';
+import { createClient } from '../../../lib/supabaseClient';
 
 type Program = {
   id: string;
@@ -34,7 +34,7 @@ export default function AddCourse({ onSuccess }: { onSuccess?: () => void }) {
     program_id: '',
   });
   const [error, setError] = useState<string | null>(null);
-
+const supabase = createClient();
   useEffect(() => {
     fetchPrograms();
   }, []);

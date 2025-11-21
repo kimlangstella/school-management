@@ -10,7 +10,7 @@ import {
   useDisclosure,
 } from '@heroui/react';
 import { Icon } from '@iconify/react';
-import { supabase } from '../../../lib/supabaseClient';
+import { createClient } from '../../../lib/supabaseClient';
 
 type School = {
   id: string;
@@ -34,7 +34,7 @@ export default function AddBranch({ onSuccess }: { onSuccess?: () => void }) {
     phone: '',
   });
   const [error, setError] = useState<string | null>(null);
-
+const supabase = createClient();
   useEffect(() => {
     fetchSchools();
   }, []);

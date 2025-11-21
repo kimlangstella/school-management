@@ -4,14 +4,14 @@ import React, { useState } from "react";
 import { useRouter } from "next/navigation";
 import { Button, Input, Link, Form, Checkbox } from "@heroui/react";
 import { Icon } from "@iconify/react";
-import { supabase } from "../../../../lib/supabaseClient";
+import { createClient } from "../../../../lib/supabaseClient";
 import Image from "next/image";
 export default function LoginPage() {
   const router = useRouter();
   const [isVisible, setIsVisible] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
-
+const supabase = createClient();
   const [formData, setFormData] = useState({
     email: "",
     password: "",

@@ -46,7 +46,7 @@ import { ArrowDownIcon } from "../icon/arrow-down";
 import { ArrowUpIcon } from "../icon/arrow-up";
 
 import { useMemoizedCallback } from "../use-memoized-callback";
-import { supabase } from "../../../lib/supabaseClient";
+import { createClient } from "../../../lib/supabaseClient";
 import {
     trialColumn,
     INITIAL_VISIBLE_COLUMNS,
@@ -66,7 +66,7 @@ type Branch = {
 
 export default function StudentTable() {
     // Removed unused state (error, programs, users)
-
+    const supabase = createClient();
     const [filterValue, setFilterValue] = useState("");
     const [selectedKeys, setSelectedKeys] = useState<Selection>(new Set([]));
     const [visibleColumns, setVisibleColumns] = useState<Selection>(

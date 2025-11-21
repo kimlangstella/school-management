@@ -9,7 +9,7 @@ import {
   Button,
   useDisclosure,
 } from '@heroui/react';
-import { supabase } from '../../../lib/supabaseClient';
+import { createClient } from '../../../lib/supabaseClient';
 
 type Program = {
   id: string;
@@ -30,7 +30,7 @@ export default function EditProgramModal({
   const { isOpen, onOpen, onOpenChange } = useDisclosure();
   const [formData, setFormData] = useState<Program | null>(program);
   const [error, setError] = useState<string | null>(null);
-
+  const supabase = createClient();
   useEffect(() => {
     if (program) {
       setFormData(program);

@@ -8,7 +8,7 @@ import {
   ModalContent,
   useDisclosure,
 } from '@heroui/react';
-import { supabase } from '../../../lib/supabaseClient';
+import { createClient } from '../../../lib/supabaseClient';
 import { Icon } from '@iconify/react';
 
 type Exam = {
@@ -34,6 +34,7 @@ type Program = {
 
 export default function AddExamModal({ onSuccess }: { onSuccess?: () => void }) {
   const { isOpen, onOpen, onOpenChange } = useDisclosure();
+  const supabase = createClient();
   const [form, setForm] = useState<Exam>({
     id: '',
     branch_id: '',

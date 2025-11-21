@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { supabase } from '../../../lib/supabaseClient';
+import { createClient } from '../../../lib/supabaseClient';
 import CardAaa from '@/components/card/card-aaa';
 import AddCourse from '@/components/modal/add-course';
 import EditCourseModal from '@/components/modal/edit-course';
@@ -26,7 +26,7 @@ export default function CoursePage() {
   const [programs, setPrograms] = useState<Program[]>([]);
   const [selectedProgram, setSelectedProgram] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
-
+   const supabase = createClient();
   const fetchCourses = async () => {
     const { data, error } = await supabase.rpc('get_all_courses');
     if (error) setError(error.message);

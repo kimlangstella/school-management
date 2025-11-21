@@ -14,7 +14,7 @@ import {
   useDisclosure,
 } from "@heroui/react";
 import { useEffect, useState } from "react";
-import { supabase } from "../../../lib/supabaseClient";
+import { createClient } from "../../../lib/supabaseClient";
 import { Student } from "@/components/types/columns";
 import nationalities from "@/components/types/nationalities";
 import { DangerCircleSvg } from "@/components/icon/danger-circle";
@@ -43,7 +43,7 @@ export default function EditStudent({
   trigger,
 }: EditStudentProps) {
   const { isOpen, onOpen, onOpenChange } = useDisclosure();
-
+const supabase = createClient();
   const [branches, setBranches] = useState<BranchObject[]>([]);
   const [programs, setPrograms] = useState<Program[]>([]);
   const [users, setUsers] = useState<User[]>([]);

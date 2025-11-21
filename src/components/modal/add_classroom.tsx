@@ -12,7 +12,7 @@ import {
 } from "@heroui/react";
 import { Icon } from "@iconify/react";
 import { useEffect, useState } from "react";
-import { supabase } from "../../../lib/supabaseClient";
+import { createClient } from "../../../lib/supabaseClient";
 
 type Branch = {
   id: string;
@@ -27,7 +27,7 @@ type Program = {
 
 export default function AddClassroom({ onUpdate }: { onUpdate?: () => void }) {
   const { isOpen, onOpen, onOpenChange } = useDisclosure();
-
+  const supabase = createClient();
   const [branches, setBranches] = useState<Branch[]>([]);
   const [programs, setPrograms] = useState<Program[]>([]);
 

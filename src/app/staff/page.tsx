@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { supabase } from '../../../lib/supabaseClient';
+import { createClient } from '../../../lib/supabaseClient';
 import {
   Table,
   TableHeader,
@@ -34,7 +34,7 @@ export default function UserManagement() {
   const [isModalOpen, setModalOpen] = useState(false);
   const [modalMode, setModalMode] = useState<'add' | 'edit'>('add');
   const [selectedUser, setSelectedUser] = useState<User | null>(null);
-
+   const supabase = createClient();
   const fetchUsers = async () => {
     const { data, error } = await supabase.rpc('get_all_users');
     console.log("data",data)

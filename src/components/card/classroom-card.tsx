@@ -2,7 +2,7 @@
 
 import React, { useMemo, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { supabase } from "../../../lib/supabaseClient";
+import { createClient } from "../../../lib/supabaseClient";
 import {
     Button,
     Dropdown,
@@ -13,7 +13,6 @@ import {
 import { Icon } from "@iconify/react";
 import ManageStudentsModal from "../modal/manage-student";
 
-/* ---------------- Types ---------------- */
 type Branch = { id: string; name: string };
 type Program = { id: string; name: string; branch_id: string };
 
@@ -27,12 +26,12 @@ type Classroom = {
     program_id: string; // <-- added for filtering
 };
 
-/* --------------- Data fetchers --------------- */
+const supabase = createClient();
 const fetchClassrooms = async (): Promise<Classroom[]> => {
+    
     const { data, error } = await supabase.rpc("get_all_classrooms");
     if (error) throw error;
-    // ensure program_id is present as string
-    // FIX: Replaced 'any' with specific object structure
+    
     return (data ?? []).map((x: {
         id: string;
         class_name: string;
