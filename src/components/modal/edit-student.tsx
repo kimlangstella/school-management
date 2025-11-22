@@ -70,6 +70,23 @@ const supabase = createClient();
   );
   const [paymentNote, setPaymentNote] = useState((student as any).payment_note ?? "");
 
+  // Reset state when student changes or modal opens
+  useEffect(() => {
+    if (isOpen) {
+      setGender(student.gender ?? "male");
+      setStatus(student.status ?? "active");
+      setSelectedBranchId(student.branch_id ?? null);
+      const newNationalityCode = nationalities.find(
+        (n) => n.name === student.nationality
+      )?.code;
+      setSelectedNationality(newNationalityCode);
+      setPaymentStatus((student as any).payment_status ?? "unpaid");
+      setPaymentNote((student as any).payment_note ?? "");
+      // Reset selected programs - will be set by the other useEffect
+      setSelectedProgramIds([]);
+    }
+  }, [isOpen, student.id]);
+
   // Load dropdown data and get current user
   useEffect(() => {
     const fetchData = async () => {
@@ -347,18 +364,26 @@ const supabase = createClient();
         <ModalContent className="dark text-foreground bg-background w-full sm:w-[1000px] max-w-full p-2 sm:p-3">
           <ModalBody>
             <form onSubmit={handleSubmit}>
-              <div className="grid grid-cols-1 gap-3 sm:gap-4 sm:grid-cols-2 lg:grid-cols-3">
+              <div className="grid grid-cols-1 gap-3 sm:gap-4 sm:grid-cols-2 lg:grid-cols-3 mb-4">
                 <Input
                   name="first_name"
                   isRequired
                   label="First Name"
                   defaultValue={student.first_name}
+                  classNames={{
+                    label: "text-foreground",
+                    input: "text-foreground",
+                  }}
                 />
                 <Input
                   name="last_name"
                   isRequired
                   label="Last Name"
                   defaultValue={student.last_name}
+                  classNames={{
+                    label: "text-foreground",
+                    input: "text-foreground",
+                  }}
                 />
                 <Autocomplete
                   name="gender"
@@ -366,21 +391,55 @@ const supabase = createClient();
                   isRequired
                   selectedKey={gender}
                   onSelectionChange={(key) => setGender(key?.toString() ?? "")}
+                  classNames={{
+                    popoverContent: "dark text-foreground bg-background",
+                    label: "text-foreground",
+                    trigger: "text-foreground",
+                  }}
                 >
-                  <AutocompleteItem key="male">Male</AutocompleteItem>
-                  <AutocompleteItem key="female">Female</AutocompleteItem>
-                  <AutocompleteItem key="other">Other</AutocompleteItem>
+                  <AutocompleteItem 
+                    key="male"
+                    classNames={{
+                      base: "text-foreground data-[hover=true]:bg-default-100",
+                    }}
+                  >
+                    Male
+                  </AutocompleteItem>
+                  <AutocompleteItem 
+                    key="female"
+                    classNames={{
+                      base: "text-foreground data-[hover=true]:bg-default-100",
+                    }}
+                  >
+                    Female
+                  </AutocompleteItem>
+                  <AutocompleteItem 
+                    key="other"
+                    classNames={{
+                      base: "text-foreground data-[hover=true]:bg-default-100",
+                    }}
+                  >
+                    Other
+                  </AutocompleteItem>
                 </Autocomplete>
                 <Input
                   name="dob"
                   label="Date of Birth"
                   type="date"
                   defaultValue={student.date_of_birth?.split("T")[0]}
+                  classNames={{
+                    label: "text-foreground",
+                    input: "text-foreground",
+                  }}
                 />
                 <Input
                   name="pob"
                   label="Place of Birth"
                   defaultValue={student.place_of_birth}
+                  classNames={{
+                    label: "text-foreground",
+                    input: "text-foreground",
+                  }}
                 />
                 <Autocomplete
                   name="nationality"
@@ -391,6 +450,11 @@ const supabase = createClient();
                     setSelectedNationality(key?.toString())
                   }
                   defaultItems={nationalities}
+                  classNames={{
+                    popoverContent: "dark text-foreground bg-background",
+                    label: "text-foreground",
+                    trigger: "text-foreground",
+                  }}
                 >
                   {(item) => (
                     <AutocompleteItem
@@ -402,6 +466,9 @@ const supabase = createClient();
                           src={`https://flagcdn.com/${item.code.toLowerCase()}.svg`}
                         />
                       }
+                      classNames={{
+                        base: "text-foreground data-[hover=true]:bg-default-100",
+                      }}
                     >
                       {item.name}
                     </AutocompleteItem>
@@ -411,47 +478,83 @@ const supabase = createClient();
                   name="phone"
                   label="Phone"
                   defaultValue={student.phone}
+                  classNames={{
+                    label: "text-foreground",
+                    input: "text-foreground",
+                  }}
                 />
                 <Input
                   name="email"
                   label="Email"
                   defaultValue={student.email}
+                  classNames={{
+                    label: "text-foreground",
+                    input: "text-foreground",
+                  }}
                 />
                 <Input
                   name="mother_name"
                   label="Mother's Name"
                   defaultValue={student.mother_name}
+                  classNames={{
+                    label: "text-foreground",
+                    input: "text-foreground",
+                  }}
                 />
                 <Input
                   name="mother_occupation"
                   label="Mother's Occupation"
                   defaultValue={student.mother_occupation}
+                  classNames={{
+                    label: "text-foreground",
+                    input: "text-foreground",
+                  }}
                 />
                 <Input
                   name="father_name"
                   label="Father's Name"
                   defaultValue={student.father_name}
+                  classNames={{
+                    label: "text-foreground",
+                    input: "text-foreground",
+                  }}
                 />
                 <Input
                   name="father_occupation"
                   label="Father's Occupation"
                   defaultValue={student.father_occupation}
+                  classNames={{
+                    label: "text-foreground",
+                    input: "text-foreground",
+                  }}
                 />
                 <Input
                   name="address"
                   label="Address"
                   defaultValue={student.address}
+                  classNames={{
+                    label: "text-foreground",
+                    input: "text-foreground",
+                  }}
                 />
                 <Input
                   name="parent_contact"
                   label="Parent Contact"
                   defaultValue={student.parent_contact}
+                  classNames={{
+                    label: "text-foreground",
+                    input: "text-foreground",
+                  }}
                 />
                 <Input
                   name="admission_date"
                   label="Admission Date"
                   type="date"
                   defaultValue={student.admission_date?.split("T")[0]}
+                  classNames={{
+                    label: "text-foreground",
+                    input: "text-foreground",
+                  }}
                 />
 
                 <Autocomplete
@@ -462,31 +565,42 @@ const supabase = createClient();
                     setSelectedBranchId(key?.toString() ?? null)
                   }
                   items={branches}
+                  classNames={{
+                    popoverContent: "dark text-foreground bg-background",
+                    label: "text-foreground",
+                    trigger: "text-foreground",
+                  }}
                 >
                   {(item) => (
-                    <AutocompleteItem key={item.id}>
+                    <AutocompleteItem 
+                      key={item.id}
+                      classNames={{
+                        base: "text-foreground data-[hover=true]:bg-default-100",
+                      }}
+                    >
                       {item.name}
                     </AutocompleteItem>
                   )}
                 </Autocomplete>
 
                 {/* ✅ Fixed Programs Selector */}
-<div>
-      <label className="block mb-1 text-sm">
+<div className="w-full">
+      <label className="block mb-2 text-sm font-medium text-foreground">
         Programs<span className="text-red-500">*</span>
       </label>
       {!selectedBranchId ? (
-        <div className="w-full max-w-[400px] border px-4 py-8 rounded-xl border-default-200 dark:border-default-100 flex items-center justify-center">
-          <p className="text-sm text-default-500 text-center">
+        <div className="w-full border px-4 py-8 rounded-xl border-default-200 dark:border-default-100 flex items-center justify-center">
+          <p className="text-sm text-default-500 text-center px-2">
             Please select a branch first to view available programs
           </p>
         </div>
       ) : (
-        <div className="w-full max-w-[400px] border px-2 py-2 rounded-xl border-default-200 dark:border-default-100">
+        <div className="w-full border px-2 py-2 rounded-xl border-default-200 dark:border-default-100">
           <Listbox
             classNames={{
               base: "max-w-full",
-              list: "max-h-[150px] overflow-y-auto",
+              list: "max-h-[150px] overflow-y-auto dark text-foreground bg-background",
+              popoverContent: "dark text-foreground bg-background",
             }}
             selectedKeys={new Set(selectedProgramIds)}
             items={uniquePrograms}
@@ -509,7 +623,13 @@ const supabase = createClient();
             }}
           >
             {(program: Program) => (
-              <ListboxItem key={program.id} textValue={program.name}>
+              <ListboxItem 
+                key={program.id} 
+                textValue={program.name}
+                classNames={{
+                  base: "text-foreground data-[hover=true]:bg-default-100",
+                }}
+              >
                 <div className="flex flex-col">
                   <span className="text-small font-medium">
                     {program.name}
@@ -532,6 +652,10 @@ const supabase = createClient();
                     value={users.find(u => u.id === currentUserId)?.name || "Current User"}
                     isReadOnly
                     isDisabled
+                    classNames={{
+                      label: "text-foreground",
+                      input: "text-foreground",
+                    }}
                   />
                 )}
 
@@ -541,21 +665,39 @@ const supabase = createClient();
                   isRequired
                   selectedKey={status}
                   onSelectionChange={(key) => setStatus(key?.toString() ?? "")}
+                  classNames={{
+                    popoverContent: "dark text-foreground bg-background",
+                    label: "text-foreground",
+                    trigger: "text-foreground",
+                  }}
                 >
                   <AutocompleteItem
                     key="active"
                     startContent={SuccessCircleSvg}
+                    classNames={{
+                      base: "text-foreground data-[hover=true]:bg-default-100",
+                    }}
                   >
                     Active
                   </AutocompleteItem>
                   <AutocompleteItem
                     key="inactive"
                     startContent={DangerCircleSvg}
+                    classNames={{
+                      base: "text-foreground data-[hover=true]:bg-default-100",
+                    }}
                   >
                     Inactive
                   </AutocompleteItem>
 
-                  <AutocompleteItem key="hold">Hold</AutocompleteItem>
+                  <AutocompleteItem 
+                    key="hold"
+                    classNames={{
+                      base: "text-foreground data-[hover=true]:bg-default-100",
+                    }}
+                  >
+                    Hold
+                  </AutocompleteItem>
                 </Autocomplete>
 
                 <Autocomplete
@@ -565,9 +707,28 @@ const supabase = createClient();
                   onSelectionChange={(key) => {
                     if (typeof key === "string") setPaymentStatus(key);
                   }}
+                  classNames={{
+                    popoverContent: "dark text-foreground bg-background",
+                    label: "text-foreground",
+                    trigger: "text-foreground",
+                  }}
                 >
-                  <AutocompleteItem key="unpaid">Unpaid</AutocompleteItem>
-                  <AutocompleteItem key="paid">Paid</AutocompleteItem>
+                  <AutocompleteItem 
+                    key="unpaid"
+                    classNames={{
+                      base: "text-foreground data-[hover=true]:bg-default-100",
+                    }}
+                  >
+                    Unpaid
+                  </AutocompleteItem>
+                  <AutocompleteItem 
+                    key="paid"
+                    classNames={{
+                      base: "text-foreground data-[hover=true]:bg-default-100",
+                    }}
+                  >
+                    Paid
+                  </AutocompleteItem>
                 </Autocomplete>
 
                 <Input
@@ -575,6 +736,10 @@ const supabase = createClient();
                   placeholder=""
                   value={paymentNote}
                   onChange={(e) => setPaymentNote(e.target.value)}
+                  classNames={{
+                    label: "text-foreground",
+                    input: "text-foreground",
+                  }}
                 />
 
                 <Input
@@ -582,6 +747,10 @@ const supabase = createClient();
                   label="Payment End Date"
                   type="date"
                   defaultValue={student.payment_end_date?.split("T")[0]}
+                  classNames={{
+                    label: "text-foreground",
+                    input: "text-foreground",
+                  }}
                 />
 
                 {student.image_url && (
@@ -598,30 +767,42 @@ const supabase = createClient();
                     />
                   </div>
                 )}
-                <Input name="image" label="New Image (optional)" type="file" />
+                <Input 
+                  name="image" 
+                  label="New Image (optional)" 
+                  type="file"
+                  classNames={{
+                    label: "text-foreground",
+                    input: "text-foreground",
+                  }}
+                />
                 <Input
                   name="insurance_number"
                   label="Insurance Number"
                   defaultValue={student.insurance_number ?? ""}
+                  classNames={{
+                    label: "text-foreground",
+                    input: "text-foreground",
+                  }}
                 />
                 <Input
                   name="insurance_expiry_date"
                   label="Insurance Expiry Date"
                   type="date"
                   defaultValue={student.insurance_expiry?.split("T")[0]}
+                  classNames={{
+                    label: "text-foreground",
+                    input: "text-foreground",
+                  }}
                 />
               </div>
 
               {error && <p className="text-red-500 mt-4">{error}</p>}
-              <Divider className="my-4" />
 
+              <Divider className="my-4" />
               <div className="mt-6 flex justify-end gap-2">
-                <Button radius="full" variant="bordered" onPress={onOpenChange}>
-                  Cancel
-                </Button>
-                <Button color="primary" radius="full" type="submit">
-                  Save Changes
-                </Button>
+                <Button radius="full" variant="bordered" onPress={onOpenChange}>Cancel</Button>
+                <Button color="primary" radius="full" type="submit">Save Changes</Button>
               </div>
             </form>
           </ModalBody>

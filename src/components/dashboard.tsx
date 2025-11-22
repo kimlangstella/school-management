@@ -215,7 +215,7 @@ const supabase = createClient();
         </header>
 
         <main className="w-full h-screen overflow-hidden">
-          <div className="flex w-full h-full overflow-auto flex-col p-2 sm:p-4">
+          <div className="flex w-full h-full overflow-y-auto overflow-x-hidden flex-col p-2 sm:p-4">
             {children}
           </div>
         </main>

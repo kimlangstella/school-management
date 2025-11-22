@@ -61,6 +61,7 @@ import nationalities from "@/components/types/nationalities";
 import EditStudent from "../modal/edit-student";
 import { EditLinearIcon } from "../icon/edit";
 import AddStudent from "../modal/add-student";
+import ViewStudent from "../modal/view-student";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 
 // Type for programs fetched via RPC
@@ -675,16 +676,21 @@ export default function StudentTable() {
                     return (
                         <div className="flex items-center gap-2 sm:gap-2">
                             <div className="p-2 -m-2 touch-manipulation">
-                                <EyeFilledIcon
-                                    {...getEyesProps()}
-                                    className="cursor-pointer text-default-400"
-                                    height={20}
-                                    width={20}
+                                <ViewStudent
+                                    student={student}
+                                    trigger={
+                                        <EyeFilledIcon
+                                            className="cursor-pointer text-default-400 hover:text-primary active:scale-95"
+                                            height={20}
+                                            width={20}
+                                        />
+                                    }
                                 />
                             </div>
 
                             <div className="p-2 -m-2 touch-manipulation">
                                 <EditStudent
+                                    key={`edit-${student.id}`}
                                     student={student}
                                     onUpdate={async () => {
                                         // Invalidate and refetch to ensure fresh data
@@ -706,7 +712,7 @@ export default function StudentTable() {
                                 />
                             </div>
 
-                            <div className="p-2 -m-2 touch-manipulation">
+                            <div className="hidden sm:block p-2 -m-2 touch-manipulation">
                                 <DeleteFilledIcon
                                     {...getDeleteProps()}
                                     onClick={() => handleDelete(student.id)}
@@ -814,8 +820,8 @@ export default function StudentTable() {
 
     const topContent = useMemo(() => {
         return (
-            <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 sm:gap-4 overflow-auto px-[6px] py-[4px]">
-                <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 sm:gap-3 w-full sm:w-auto">
+            <div className="flex flex-col gap-3 sm:gap-4 overflow-auto px-2 sm:px-[6px] py-2 sm:py-[4px]">
+                <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 sm:gap-3 w-full sm:w-auto">
                     <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 sm:gap-4 w-full sm:w-auto">
                         <Input
                             className="w-full sm:min-w-[200px]"
@@ -827,11 +833,11 @@ export default function StudentTable() {
                             value={filterValue}
                             onValueChange={onSearchChange}
                         />
-                        <div>
+                        <div className="w-full sm:w-auto">
                             <Popover placement="bottom-start" offset={10}>
                                 <PopoverTrigger>
                                     <Button
-                                        className="bg-default-100 text-default-800"
+                                        className="bg-default-100 text-default-800 w-full sm:w-auto"
                                         size="sm"
                                         startContent={
                                             <Icon
@@ -844,7 +850,7 @@ export default function StudentTable() {
                                         Filter
                                     </Button>
                                 </PopoverTrigger>
-                                <PopoverContent className="w-80 dark text-foreground bg-background border-default-200">
+                                <PopoverContent className="w-[calc(100vw-2rem)] sm:w-80 dark text-foreground bg-background border-default-200">
                                     <div className="flex w-full flex-col gap-6 px-2 py-4 max-h-[70vh] overflow-y-auto">
                                         <RadioGroup
                                             label="Status"
@@ -1088,11 +1094,11 @@ export default function StudentTable() {
                                 </PopoverContent>
                             </Popover>
                         </div>
-                        <div>
+                        <div className="w-full sm:w-auto">
                             <Dropdown>
                                 <DropdownTrigger>
                                     <Button
-                                        className="bg-default-100 text-default-800"
+                                        className="bg-default-100 text-default-800 w-full sm:w-auto"
                                         size="sm"
                                         startContent={
                                             <Icon
@@ -1136,11 +1142,11 @@ export default function StudentTable() {
                                 </DropdownMenu>
                             </Dropdown>
                         </div>
-                        <div>
+                        <div className="w-full sm:w-auto">
                             <Dropdown closeOnSelect={false}>
                                 <DropdownTrigger>
                                     <Button
-                                        className="bg-default-100 text-default-800"
+                                        className="bg-default-100 text-default-800 w-full sm:w-auto"
                                         size="sm"
                                         startContent={
                                             <Icon
@@ -1179,9 +1185,10 @@ export default function StudentTable() {
                         </div>
                     </div>
 
-                    <Divider className="h-5" orientation="vertical" />
+                    <Divider className="hidden sm:block h-5" orientation="vertical" />
+                    <Divider className="block sm:hidden" />
 
-                    <div className="whitespace-nowrap text-sm text-default-800">
+                    <div className="whitespace-nowrap text-sm text-default-800 px-2 sm:px-0">
                         {filterSelectedKeys === "all"
                             ? "All items selected"
                             : `${filterSelectedKeys.size} Selected`}
@@ -1191,7 +1198,7 @@ export default function StudentTable() {
                         <Dropdown placement="bottom-start">
                             <DropdownTrigger>
                                 <Button
-                                    className="bg-default-100 text-default-800"
+                                    className="bg-default-100 text-default-800 w-full sm:w-auto"
                                     endContent={<Icon className="text-default-400" icon="solar:alt-arrow-down-linear" />}
                                     size="sm"
                                     variant="flat"
@@ -1390,9 +1397,9 @@ export default function StudentTable() {
     }
 
     return (
-        <div className="h-full w-full pr-0 sm:pr-2 pt-3 overflow-x-auto">
+        <div className="w-full pt-2 sm:pt-3">
             {topBar}
-            <div className="min-w-[800px]">
+            <div className="w-full overflow-x-auto overflow-y-hidden px-1 sm:px-0" style={{ scrollBehavior: 'smooth' }}>
                 <Table
                     isHeaderSticky
                     aria-label="Example table with custom cells, pagination and sorting"
@@ -1400,7 +1407,7 @@ export default function StudentTable() {
                     bottomContentPlacement="outside"
                     classNames={{
                         td: "before:bg-transparent",
-                        wrapper: "overflow-x-auto",
+                        wrapper: "min-w-[800px] overflow-y-hidden",
                     }}
                     selectedKeys={filterSelectedKeys}
                     selectionMode="multiple"

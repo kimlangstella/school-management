@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useEffect, useState } from "react";
-import { Card } from "@heroui/react";
+import { Card, Divider } from "@heroui/react";
 import { Icon } from "@iconify/react";
 import { createClient } from "../../../lib/supabaseClient";
 
@@ -49,6 +49,8 @@ export default function KpiState() {
   const [totalStudents, setTotalStudents] = useState(0);
   const [activeStudents, setActiveStudents] = useState(0);
   const [paidAmongActive, setPaidAmongActive] = useState(0);
+  const [unpaidAmongActive, setUnpaidAmongActive] = useState(0);
+  const [inactiveStudents, setInactiveStudents] = useState(0);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
@@ -97,10 +99,16 @@ export default function KpiState() {
       const paidActiveOnly = Array.from(studentIds).filter(
         (sid) => statusMap[sid] === "active" && paidMap[sid] === true
       ).length;
+      const unpaidActiveOnly = activeOnly - paidActiveOnly;
+      const inactiveOnly = Array.from(studentIds).filter(
+        (sid) => statusMap[sid] === "inactive" || statusMap[sid] === "hold"
+      ).length;
 
       setTotalStudents(totalUnique);
       setActiveStudents(activeOnly);
       setPaidAmongActive(paidActiveOnly);
+      setUnpaidAmongActive(unpaidActiveOnly);
+      setInactiveStudents(inactiveOnly);
 
       // Logs for verification
       console.log("RPC total_count:", totalCount);
@@ -116,20 +124,7 @@ export default function KpiState() {
   return (
     <div className="w-full">
       <dl className="grid grid-cols-1 gap-5 sm:grid-cols-2 md:grid-cols-3">
-        {/* Total students (unique) */}
-        <Card className="border border-transparent dark:border-default-100">
-          <div className="flex p-4 relative">
-            <div className="mt-1 flex h-8 w-8 items-center justify-center rounded-md bg-success-100">
-              <Icon className="text-success" icon="solar:users-group-rounded-linear" width={20} />
-            </div>
-            <div className="flex flex-col gap-y-2">
-              <dt className="mx-4 text-small font-medium text-default-500">Total students</dt>
-              <dd className="px-4 text-2xl font-semibold text-default-700">{totalStudents}</dd>
-            </div>
-          </div>
-        </Card>
-
-        {/* Active students (unique) */}
+        {/* First: Active students */}
         <Card className="border border-transparent dark:border-default-100">
           <div className="flex p-4 relative">
             <div className="mt-1 flex h-8 w-8 items-center justify-center rounded-md bg-success-100">
@@ -142,15 +137,37 @@ export default function KpiState() {
           </div>
         </Card>
 
-        {/* Paid among active (unique) */}
+        {/* Second: Paid with Unpaid below */}
         <Card className="border border-transparent dark:border-default-100">
           <div className="flex p-4 relative">
             <div className="mt-1 flex h-8 w-8 items-center justify-center rounded-md bg-success-100">
               <Icon className="text-success" icon="solar:dollar-minimalistic-linear" width={20} />
             </div>
+            <div className="flex flex-col gap-y-2 flex-1">
+              <div className="flex flex-col gap-2">
+                <div className="flex items-center justify-between mx-4">
+                  <dt className="text-small font-medium text-default-500">Paid</dt>
+                  <dd className="text-xl font-semibold text-success">{paidAmongActive}</dd>
+                </div>
+                <Divider className="mx-4" />
+                <div className="flex items-center justify-between mx-4">
+                  <dt className="text-small font-medium text-default-500">Unpaid</dt>
+                  <dd className="text-xl font-semibold text-danger">{unpaidAmongActive}</dd>
+                </div>
+              </div>
+            </div>
+          </div>
+        </Card>
+
+        {/* Third: Inactive students */}
+        <Card className="border border-transparent dark:border-default-100">
+          <div className="flex p-4 relative">
+            <div className="mt-1 flex h-8 w-8 items-center justify-center rounded-md bg-danger-100">
+              <Icon className="text-danger" icon="solar:user-cross-rounded-linear" width={20} />
+            </div>
             <div className="flex flex-col gap-y-2">
-              <dt className="mx-4 text-small font-medium text-default-500">Paid among active</dt>
-              <dd className="px-4 text-2xl font-semibold text-default-700">{paidAmongActive}</dd>
+              <dt className="mx-4 text-small font-medium text-default-500">Inactive students</dt>
+              <dd className="px-4 text-2xl font-semibold text-default-700">{inactiveStudents}</dd>
             </div>
           </div>
         </Card>

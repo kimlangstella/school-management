@@ -197,18 +197,55 @@ export default function AddStudent({ onUpdate }: AddStudentProps) {
                             <div className="grid grid-cols-1 gap-3 sm:gap-4 sm:grid-cols-2 lg:grid-cols-3 mb-4">
                                 <Input name="first_name" isRequired label="First Name" />
                                 <Input name="last_name" isRequired label="Last Name" />
-                                <Autocomplete name="gender" isRequired label="Gender">
-                                    <AutocompleteItem>Male</AutocompleteItem>
-                                    <AutocompleteItem>Female</AutocompleteItem>
-                                    <AutocompleteItem>Other</AutocompleteItem>
+                                <Autocomplete 
+                                    name="gender" 
+                                    isRequired 
+                                    label="Gender"
+                                    classNames={{
+                                        popoverContent: "dark text-foreground bg-background",
+                                    }}
+                                >
+                                    <AutocompleteItem 
+                                        classNames={{
+                                            base: "text-foreground data-[hover=true]:bg-default-100",
+                                        }}
+                                    >
+                                        Male
+                                    </AutocompleteItem>
+                                    <AutocompleteItem 
+                                        classNames={{
+                                            base: "text-foreground data-[hover=true]:bg-default-100",
+                                        }}
+                                    >
+                                        Female
+                                    </AutocompleteItem>
+                                    <AutocompleteItem 
+                                        classNames={{
+                                            base: "text-foreground data-[hover=true]:bg-default-100",
+                                        }}
+                                    >
+                                        Other
+                                    </AutocompleteItem>
                                 </Autocomplete>
                                 <Input name="dob" isRequired label="Date of Birth" type="date" />
                                 <Input name="pob" isRequired label="Place of Birth" />
-                                <Autocomplete name="nationality" isRequired defaultItems={nationalities} label="Nationality">
+                                <Autocomplete 
+                                    name="nationality" 
+                                    isRequired 
+                                    defaultItems={nationalities} 
+                                    label="Nationality"
+                                    classNames={{
+                                        popoverContent: "dark text-foreground bg-background",
+                                    }}
+                                >
                                     {(item) => (
                                         <AutocompleteItem
                                             key={item.code}
-                                            startContent={<Avatar alt="Flag" className="h-6 w-6" src={`https://flagcdn.com/${item.code.toLowerCase()}.svg`} />}>
+                                            startContent={<Avatar alt="Flag" className="h-6 w-6" src={`https://flagcdn.com/${item.code.toLowerCase()}.svg`} />}
+                                            classNames={{
+                                                base: "text-foreground data-[hover=true]:bg-default-100",
+                                            }}
+                                        >
                                             {item.name}
                                         </AutocompleteItem>
                                     )}
@@ -237,8 +274,21 @@ export default function AddStudent({ onUpdate }: AddStudentProps) {
                                         setSelectedPrograms([]);
                                     }}
                                     items={branches}
-                                    isRequired>
-                                    {(item) => <AutocompleteItem key={item.id}>{item.name}</AutocompleteItem>}
+                                    isRequired
+                                    classNames={{
+                                        popoverContent: "dark text-foreground bg-background",
+                                    }}
+                                >
+                                    {(item) => (
+                                        <AutocompleteItem 
+                                            key={item.id}
+                                            classNames={{
+                                                base: "text-foreground data-[hover=true]:bg-default-100",
+                                            }}
+                                        >
+                                            {item.name}
+                                        </AutocompleteItem>
+                                    )}
                                 </Autocomplete>
 
                                 <div className="mt-4">
@@ -254,7 +304,11 @@ export default function AddStudent({ onUpdate }: AddStudentProps) {
                                     ) : (
                                     <div className="w-full max-w-[400px] border px-2 py-2 rounded-xl border-default-200 dark:border-default-100">
                                         <Listbox
-                                            classNames={{ base: "max-w-full", list: "max-h-[150px] overflow-y-auto" }}
+                                            classNames={{ 
+                                                base: "max-w-full",
+                                                list: "max-h-[150px] overflow-y-auto dark text-foreground bg-background",
+                                                popoverContent: "dark text-foreground bg-background",
+                                            }}
                                             selectedKeys={new Set(selectedPrograms)}
                                             items={filteredPrograms}
                                             label="Select Programs"
@@ -262,9 +316,16 @@ export default function AddStudent({ onUpdate }: AddStudentProps) {
                                             variant="flat"
                                             onSelectionChange={(keys) => {
                                                 if (keys instanceof Set) setSelectedPrograms([...keys].map((k) => k.toString()));
-                                            }}>
+                                            }}
+                                        >
                                             {(program: Program) => (
-                                                <ListboxItem key={program.id} textValue={program.name}>
+                                                <ListboxItem 
+                                                    key={program.id} 
+                                                    textValue={program.name}
+                                                    classNames={{
+                                                        base: "text-foreground data-[hover=true]:bg-default-100",
+                                                    }}
+                                                >
                                                     <div className="flex flex-col">
                                                         <span className="text-small font-medium">{program.name}</span>
                                                         <span className="text-tiny text-default-400">{program.branch_name}</span>
@@ -276,10 +337,38 @@ export default function AddStudent({ onUpdate }: AddStudentProps) {
                                     )}
                                 </div>
 
-                                <Autocomplete name="status" isRequired label="Status">
-                                    <AutocompleteItem startContent={SuccessCircleSvg}>Active</AutocompleteItem>
-                                    <AutocompleteItem startContent={WarningCircleSvg}>Hold</AutocompleteItem>
-                                    <AutocompleteItem startContent={DangerCircleSvg}>Inactive</AutocompleteItem>
+                                <Autocomplete 
+                                    name="status" 
+                                    isRequired 
+                                    label="Status"
+                                    classNames={{
+                                        popoverContent: "dark text-foreground bg-background",
+                                    }}
+                                >
+                                    <AutocompleteItem 
+                                        startContent={SuccessCircleSvg}
+                                        classNames={{
+                                            base: "text-foreground data-[hover=true]:bg-default-100",
+                                        }}
+                                    >
+                                        Active
+                                    </AutocompleteItem>
+                                    <AutocompleteItem 
+                                        startContent={WarningCircleSvg}
+                                        classNames={{
+                                            base: "text-foreground data-[hover=true]:bg-default-100",
+                                        }}
+                                    >
+                                        Hold
+                                    </AutocompleteItem>
+                                    <AutocompleteItem 
+                                        startContent={DangerCircleSvg}
+                                        classNames={{
+                                            base: "text-foreground data-[hover=true]:bg-default-100",
+                                        }}
+                                    >
+                                        Inactive
+                                    </AutocompleteItem>
                                 </Autocomplete>
 
                                 {/* Created By and Modified By are automatically set to current user - hidden fields */}
@@ -305,10 +394,35 @@ export default function AddStudent({ onUpdate }: AddStudentProps) {
                                     label="Payment Status"
                                     isRequired
                                     selectedKey={paymentStatus}
-                                    onSelectionChange={(key) => { if (typeof key === "string") setPaymentStatus(key); }}>
-                                    <AutocompleteItem key="unpaid">Unpaid</AutocompleteItem>
-                                    <AutocompleteItem key="partial">Partial</AutocompleteItem>
-                                    <AutocompleteItem key="paid">Paid</AutocompleteItem>
+                                    onSelectionChange={(key) => { if (typeof key === "string") setPaymentStatus(key); }}
+                                    classNames={{
+                                        popoverContent: "dark text-foreground bg-background",
+                                    }}
+                                >
+                                    <AutocompleteItem 
+                                        key="unpaid"
+                                        classNames={{
+                                            base: "text-foreground data-[hover=true]:bg-default-100",
+                                        }}
+                                    >
+                                        Unpaid
+                                    </AutocompleteItem>
+                                    <AutocompleteItem 
+                                        key="partial"
+                                        classNames={{
+                                            base: "text-foreground data-[hover=true]:bg-default-100",
+                                        }}
+                                    >
+                                        Partial
+                                    </AutocompleteItem>
+                                    <AutocompleteItem 
+                                        key="paid"
+                                        classNames={{
+                                            base: "text-foreground data-[hover=true]:bg-default-100",
+                                        }}
+                                    >
+                                        Paid
+                                    </AutocompleteItem>
                                 </Autocomplete>
 
                                 <Input label="Description" placeholder="" value={paymentNote} onChange={(e) => setPaymentNote(e.target.value)} />
